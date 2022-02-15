@@ -6,14 +6,14 @@ export default defineConfig((options) => ({
 		'src/index.ts',
 		'src/test.ts',
 	],
-	format: ['cjs'],
+	format: ['cjs', 'esm'],
 	dts: true,
 	minify: true,
-	skipNodeModulesBundle: true,
+	skipNodeModulesBundle: false,
 	splitting: false,
 	sourcemap: true,
 	target: 'esnext',
 	tsconfig: './tsconfig.json',
 	watch: options.watch,
-	keepNames: false,
+	keepNames: false
 }));
