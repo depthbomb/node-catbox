@@ -182,7 +182,7 @@ export class Catbox {
 	 * @param files Files to remove from the album
 	 * @returns The album URL
 	 */
-	public async removeFilesToAlbum(id: string, files: string[]): Promise<string> {
+	public async removeFilesFromAlbum(id: string, files: string[]): Promise<string> {
 		if (!this._userHash) {
 			throw new Error('A user hash is required for this operation.');
 		}
