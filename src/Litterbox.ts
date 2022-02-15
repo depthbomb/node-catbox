@@ -3,6 +3,17 @@ import FormData from 'form-data';
 import { createReadStream } from 'fs';
 import { USER_AGENT, LITTERBOX_BASE_URL } from './constants';
 
+type UploadOptions = {
+	/**
+	 * Path to the file to upload
+	 */
+	path: string;
+	/**
+	 * Duration before the file is deleted, defaults to `1h`
+	 */
+	duration?: '1h' | '12h' | '24h' | '72h';
+};
+
 export class Litterbox {
 	/**
 	 * Creates a new {@link Litterbox} instance
@@ -11,16 +22,15 @@ export class Litterbox {
 
 	/**
 	 * Uploads a file temporarily to Litterbox
-	 * @param path Path to the file to upload
-	 * @param duration Duration that the file should last
+	 * @param options Options
 	 * @returns The uploaded file URL
 	 */
-	public async upload(path: string, duration: '1h' | '12h' | '24h' | '72h' = '1h'): Promise<string> {
+	public async upload(options: UploadOptions): Promise<string> {
+		const { path, duration } = options;
 		const data = new FormData();
-
 		data.append('reqtype', 'fileupload');
 		data.append('fileToUpload', createReadStream(path));
-		data.append('time', duration);
+		data.append('time', duration ?? '1h');
 
 		const res = await fetch(LITTERBOX_BASE_URL, {
 			method: 'POST',

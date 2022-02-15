@@ -29,9 +29,7 @@
 		"url": "https://github.com/depthbomb/node-catbox/issues"
 	},
 	"files": [
-		"dist",
-		"dist/**/*.d.ts",
-		"dist/**/*.d.ts.map"
+		"dist"
 	],
 	"scripts": {
 		"start": "node .",

@@ -45,12 +45,16 @@ import { Catbox } from 'node-catbox';
 
 const catbox = new Catbox();
 // or with a user hash
-// const catbox = new Catbox('098f6bcd4621d373cade4e832');
+const catbox = new Catbox('098f6bcd4621d373cade4e832');
 
 try {
-	const fileURL = await catbox.uploadFile('/path/to/my/file.ext');
+	const fileURL = await catbox.uploadFile({
+		path: '/path/to/my/file.ext'
+	});
 	// or to upload from direct file URL
-	// const imageURL = await catbox.uploadURL('https://i.imgur.com/8rR6IZn.png');
+	const imageURL = await catbox.uploadURL({
+		url: 'https://i.imgur.com/8rR6IZn.png'
+	});
 
 	console.log(fileURL); // -> https://files.catbox.moe/XXXXX.ext
 } catch (err) {
@@ -65,7 +69,9 @@ import { Catbox } from 'node-catbox';
 
 const catbox = new Catbox('098f6bcd4621d373cade4e832'); // user hash required
 
-await catbox.deleteFiles(['XXXXX.ext']);
+await catbox.deleteFiles({
+	files: ['XXXXX.ext']
+});
 ```
 
 ### Uploading to Litterbox
@@ -75,7 +81,10 @@ import { Litterbox } from 'node-catbox';
 
 const litterbox = new Litterbox();
 
-await litterbox.upload('/path/to/my/file.ext', '12h');
+await litterbox.upload({
+	path: '/path/to/my/file.ext',
+	duration: '12h' // or omit to default to 1h
+});
 ```
 
 ### Creating an album
@@ -85,9 +94,11 @@ import { Catbox } from 'node-catbox';
 
 const catbox = new Catbox('098f6bcd4621d373cade4e832'); // user hash only required if you plan to edit or delete the album later
 
-const albumURL = await catbox.createAlbum('album title');
-const albumURL = await catbox.createAlbum('album title', 'album description'); // with description
-const albumURL = await catbox.createAlbum('album title', '', ['XXXXX.ext']); // with existing files
+const albumURL = await catbox.createAlbum({
+	title: 'album title',
+	description: 'album description', // optional
+	files: ['XXXXX.ext'] // optional
+});
 ```
 
 ### Editing an album
@@ -97,7 +108,12 @@ import { Catbox } from 'node-catbox';
 
 const catbox = new Catbox('098f6bcd4621d373cade4e832'); // user hash required
 
-await catbox.editAlbum('YYYYY', 'new title', 'new description', ['WWWWW.ext', 'VVVVV.ext']);
+await catbox.editAlbum({
+	id: 'YYYYY',
+	title: 'new title',
+	description: 'new description', // optional
+	files:  ['WWWWW.ext', 'VVVVV.ext'] // optional
+});
 ```
 
 ⚠️ This is a potentially destructive method where values are applied to the album directly. Consider using the method below if you are only adding/removing files from an album.
@@ -109,8 +125,14 @@ import { Catbox } from 'node-catbox';
 
 const catbox = new Catbox('098f6bcd4621d373cade4e832'); // user hash required
 
-await catbox.addFilesToAlbum('YYYYY', ['ZZZZZ.ext']);
-await catbox.removeFilesFromAlbum('YYYYY', ['ZZZZZ.ext']);
+await catbox.addFilesToAlbum({
+	id: 'YYYYY',
+	files: ['ZZZZZ.ext']
+});
+await catbox.removeFilesFromAlbum({
+	id: 'YYYYY',
+	files: ['ZZZZZ.ext']
+});
 ```
 
 ### Deleting an album
@@ -120,5 +142,7 @@ import { Catbox } from 'node-catbox';
 
 const catbox = new Catbox('098f6bcd4621d373cade4e832'); // user hash required
 
-await catbox.deleteAlbum('YYYYY');
+await catbox.deleteAlbum({
+	id: 'YYYYY'
+});
 ```

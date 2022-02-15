@@ -3,6 +3,78 @@ import FormData from 'form-data';
 import { createReadStream } from 'fs';
 import { USER_AGENT, CATBOX_BASE_URL } from './constants';
 
+type UploadURLOptions = {
+	/**
+	 * Direct URL of the file to upload
+	 */
+	url: string;
+};
+
+type UploadFileOptions = {
+	/**
+	 * Path to the file to upload
+	 */
+	path: string;
+};
+
+type DeleteFilesOptions = {
+	/**
+	 * Array of existing file names (including extensions) to delete
+	 */
+	files: string[];
+};
+
+type CreateAlbumOptions = {
+	/**
+	 * Title of the album
+	 */
+	title: string;
+	/**
+	 * Description of the album
+	 */
+	description?: string;
+	/**
+	 * Names of existing files that the album should contain
+	 */
+	files?: string[];
+};
+
+type EditAlbumOptions = CreateAlbumOptions & {
+	/**
+	 * ID of the album
+	 */
+	id: string;
+};
+
+type AddFilesToAlbumOptions = {
+	/**
+	 * ID of the album
+	 */
+	id: string;
+	/**
+	 * Names of existing files to add to the album
+	 */
+	files: string[];
+};
+
+type RemoveFilesToAlbumOptions = {
+	/**
+	 * ID of the album
+	 */
+	id: string;
+	/**
+	 * Names of existing files to remove from the album
+	 */
+	files: string[];
+};
+
+type DeleteAlbumOptions = {
+	/**
+	 * ID of the album
+	 */
+	id: string;
+};
+
 export class Catbox {
 	private readonly _userHash?: string;
 
@@ -18,10 +90,11 @@ export class Catbox {
 	 * Uploads a file via direct URL to Catbox.moe
 	 * 
 	 * Files uploaded while a `userHash` is provided will be tied to your account.
-	 * @param url Direct file URL to upload
+	 * @param options Options
 	 * @returns The uploaded file URL
 	 */
-	public async uploadURL(url: string): Promise<string> {
+	public async uploadURL(options: UploadURLOptions): Promise<string> {
+		const { url } = options;
 		const data = new FormData();
 
 		data.append('reqtype', 'urlupload');
@@ -43,10 +116,11 @@ export class Catbox {
 	 * Uploads a file via its path to Catbox.moe
 	 * 
 	 * Files uploaded while a `userHash` is provided will be tied to your account.
-	 * @param url Path of the file to upload
+	 * @param options Options
 	 * @returns The uploaded file URL
 	 */
-	public async uploadFile(path: string): Promise<string> {
+	public async uploadFile(options: UploadFileOptions): Promise<string> {
+		const { path } = options;
 		const data = new FormData();
 
 		data.append('reqtype', 'fileupload');
@@ -66,14 +140,15 @@ export class Catbox {
 
 	/**
 	 * Deletes files from the user account
-	 * @param files Names of files to delete
+	 * @param options Options
 	 * @returns `true` if files have been deleted successfully
 	 */
-	public async deleteFiles(files: string[]): Promise<boolean> {
+	public async deleteFiles(options: DeleteFilesOptions): Promise<boolean> {
 		if (!this._userHash) {
 			throw new Error('A user hash is required for this operation.');
 		}
 
+		const { files } = options;
 		const data = new FormData();
 		data.append('reqtype', 'deletefiles');
 		data.append('userhash', this._userHash);
@@ -90,16 +165,17 @@ export class Catbox {
 
 	/**
 	 * Creates an album
-	 * @param title Title of the album
-	 * @param description Description of the album
-	 * @param files Array of existing files to add to the album on creation
+	 * @param options Options
 	 * @returns The album URL
 	 */
-	public async createAlbum(title: string, description: string | undefined = undefined, files: string[] | undefined = undefined): Promise<string> {
+	public async createAlbum(options: CreateAlbumOptions): Promise<string> {
+		const { title, description, files } = options;
 		const data = new FormData();
 		data.append('reqtype', 'createalbum');
 		data.append('title', title);
-		data.append('desc', description ?? '');
+		if (description) {
+			data.append('desc', description);
+		}
 		if (files && files.length) {
 			data.append('files', files.join(' '));
 		}
@@ -122,23 +198,25 @@ export class Catbox {
 	 * Values are treated as direct input. For example omitting the description will remove the album's description and supplying a new array of files will change the album's files.
 	 * 
 	 * Consider using the less-destructive {@link addFilesToAlbum} or {@link removeFilesToAlbum} methods if you wish to only modify album contents.
-	 * @param id ID of the album to edit
-	 * @param title New title of the album
-	 * @param description New description of the album
-	 * @param files Files that the album contains
+	 * @param options Options
 	 * @returns The album URL
 	 */
-	public async editAlbum(id: string, title: string, description: string | null, files: string[]): Promise<string> {
+	public async editAlbum(options: EditAlbumOptions): Promise<string> {
 		if (!this._userHash) {
 			throw new Error('A user hash is required for this operation.');
 		}
 
+		const { id, title, description, files } = options;
 		const data = new FormData();
 		data.append('reqtype', 'editalbum');
 		data.append('short', id);
 		data.append('title', title);
-		data.append('desc', description ?? '');
-		data.append('files', files.join(' '));
+		if (description) {
+			data.append('desc', description);
+		}
+		if (files && files.length) {
+			data.append('files', files.join(' '));
+		}
 		data.append('userhash', this._userHash);
 
 		const res = await this._doRequest(CATBOX_BASE_URL, data);
@@ -152,15 +230,15 @@ export class Catbox {
 
 	/**
 	 * Adds existing files to an album
-	 * @param id ID of the album to add files to
-	 * @param files Files to add to the album
+	 * @param options Options
 	 * @returns The album URL
 	 */
-	public async addFilesToAlbum(id: string, files: string[]): Promise<string> {
+	public async addFilesToAlbum(options: AddFilesToAlbumOptions): Promise<string> {
 		if (!this._userHash) {
 			throw new Error('A user hash is required for this operation.');
 		}
 
+		const { id, files } = options;
 		const data = new FormData();
 		data.append('reqtype', 'addtoalbum');
 		data.append('short', id);
@@ -182,11 +260,12 @@ export class Catbox {
 	 * @param files Files to remove from the album
 	 * @returns The album URL
 	 */
-	public async removeFilesFromAlbum(id: string, files: string[]): Promise<string> {
+	public async removeFilesFromAlbum(options: RemoveFilesToAlbumOptions): Promise<string> {
 		if (!this._userHash) {
 			throw new Error('A user hash is required for this operation.');
 		}
 
+		const { id, files } = options;
 		const data = new FormData();
 		data.append('reqtype', 'removefromalbum');
 		data.append('short', id);
@@ -207,11 +286,12 @@ export class Catbox {
 	 * @param id ID of the album to delete
 	 * @returns `true` if the album was deleted or if the album doesn't exist
 	 */
-	public async removeAlbum(id: string): Promise<boolean> {
+	public async removeAlbum(options: DeleteAlbumOptions): Promise<boolean> {
 		if (!this._userHash) {
 			throw new Error('A user hash is required for this operation.');
 		}
 
+		const { id } = options;
 		const data = new FormData();
 		data.append('reqtype', 'deletealbum');
 		data.append('short', id);
