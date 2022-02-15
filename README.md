@@ -38,7 +38,7 @@ yarn add node-catbox
 
 # Usage
 
-`node-catbox` currently only supports uploading to Catbox.moe and Litterbox with the remaining features coming soon.
+### Uploading to Catbox (anonymous)
 
 ```ts
 import { Catbox } from 'node-catbox';
@@ -56,9 +56,29 @@ try {
 } catch (err) {
 	console.error(err); // -> error message from server
 }
+```
+
+### Deleting a file
+
+```ts
+import { Catbox } from 'node-catbox';
+
+const catbox = new Catbox('098f6bcd4621d373cade4e832'); // user hash required
 
 await catbox.deleteFiles(['XXXXX.png']);
 ```
+
+### Uploading to Litterbox
+
+```ts
+import { Litterbox } from 'node-catbox';
+
+const litterbox = new Litterbox();
+
+await litterbox.upload('/path/to/my/file.ext', '12h');
+```
+
+
 
 # TODO List
 
