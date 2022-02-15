@@ -10,7 +10,7 @@
 		"fetch",
 		"api"
 	],
-	"license": "GPLv3",
+	"license": "MIT",
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
 	"exports": {
