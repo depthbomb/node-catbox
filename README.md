@@ -38,7 +38,7 @@ yarn add node-catbox
 
 # Usage
 
-### Uploading to Catbox (anonymous)
+### Uploading to Catbox
 
 ```ts
 import { Catbox } from 'node-catbox';
