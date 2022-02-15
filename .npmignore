@@ -7,6 +7,7 @@ src/
 .gitignore
 .release-it.json
 .yarnrc.yml
+README.md
 tsconfig.eslint.json
 tsconfig.json
 yarn.lock
