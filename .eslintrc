@@ -1,0 +1,32 @@
+{
+	"root": true,
+	"env": {
+		"node": true
+	},
+	"globals": {
+		"NodeJS": true
+	},
+	"parser": "@typescript-eslint/parser",
+	"plugins": [
+		"@typescript-eslint"
+	],
+	"rules": {
+		"eqeqeq": "error",
+		"eol-last": "warn",
+		"no-undef": "warn",
+		"no-empty": "warn",
+		"dot-notation": "error",
+		"no-useless-escape": "off",
+		"no-mixed-spaces-and-tabs": "off",
+		"@typescript-eslint/no-extra-semi": "off",
+		"@typescript-eslint/ban-ts-comment": "warn",
+		"@typescript-eslint/no-var-requires": "warn",
+		"@typescript-eslint/no-empty-function": "off",
+		"@typescript-eslint/no-inferrable-types": "off",
+		"@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "_" }] // Allow discards
+	},
+	"extends": [
+		"eslint:recommended",
+		"plugin:@typescript-eslint/recommended"
+	]
+}
