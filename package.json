@@ -36,7 +36,7 @@
 		"prebuild": "rimraf ./dist/*",
 		"build": "tsc",
 		"dist": "tsup",
-		"prerelease": "npm run dist",
+		"prerelease": "yarn dist",
 		"release": "release-it",
 		"lint": "eslint ./src --ext .ts"
 	},
