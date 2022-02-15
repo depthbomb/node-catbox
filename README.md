@@ -100,7 +100,7 @@ const catbox = new Catbox('098f6bcd4621d373cade4e832'); // user hash required
 await catbox.editAlbum('YYYYY', 'new title', 'new description', ['WWWWW.ext', 'VVVVV.ext']);
 ```
 
-⚠️ This is a potentially destructive method where values are applied to the album directly. Considering using the method below if you are only adding/removing files from an album.
+⚠️ This is a potentially destructive method where values are applied to the album directly. Consider using the method below if you are only adding/removing files from an album.
 
 ### Adding and removing files from an album
 
