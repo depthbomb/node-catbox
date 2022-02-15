@@ -56,6 +56,8 @@ try {
 } catch (err) {
 	console.error(err); // -> error message from server
 }
+
+await catbox.deleteFiles(['XXXXX.png']);
 ```
 
 # TODO List
