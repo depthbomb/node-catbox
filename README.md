@@ -58,10 +58,10 @@ try {
 }
 ```
 
-# Planned Features
+# TODO List
 
 - Uploading files ✔️
   - Anonymous & as user ✔️
   - Litterbox ✔️
-- Deleting files
+- Deleting files ✔️
 - Albums

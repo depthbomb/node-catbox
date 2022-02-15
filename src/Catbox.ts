@@ -68,6 +68,31 @@ export class Catbox {
 		}
 	};
 
+	/**
+	 * Deletes files from the user account
+	 * @param files Names of files to delete
+	 * @returns `true` if files have been deleted successfully
+	 */
+	public async deleteFiles(files: string[]): Promise<boolean> {
+		if (!this._userHash) {
+			throw new Error('A user hash is required for this operation.');
+		}
+
+		const filesToDelete = files.map(f => f.trim()).join(' ');
+		const data = new FormData();
+		data.append('reqtype', 'deletefiles');
+		data.append('userhash', this._userHash);
+		data.append('files', filesToDelete);
+
+		const res = await this._doRequest(CATBOX_BASE_URL, data);
+
+		if (!res.startsWith('Files successfully deleted')) {
+			return true;
+		} else {
+			throw new Error(res); 
+		}
+	};
+
 	private async _doRequest(url: string, data: FormData): Promise<string> {
 		const res = await fetch(url, {
 			method: 'POST',
