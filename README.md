@@ -58,7 +58,7 @@ try {
 }
 ```
 
-### Deleting a file
+### Deleting files
 
 ```ts
 import { Catbox } from 'node-catbox';
@@ -78,12 +78,3 @@ const litterbox = new Litterbox();
 await litterbox.upload('/path/to/my/file.ext', '12h');
 ```
 
-
-
-# TODO List
-
-- Uploading files ✔️
-  - Anonymous & as user ✔️
-  - Litterbox ✔️
-- Deleting files ✔️
-- Albums
