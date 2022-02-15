@@ -5,7 +5,7 @@
 				<h1>node-catbox</h1>
 				<p>A library for interacting with Catbox.moe written in TypeScript.</p>
 				<p>
-					<a href="https://www.npmjs.com/package/node-catbox"><img src="https://img.shields.io/npm/v/node-catbox?color=crimson&label=%40node-catbox%2Fcore&logo=npm&style=flat-square"></a>
+					<a href="https://www.npmjs.com/package/node-catbox"><img src="https://img.shields.io/npm/v/node-catbox?color=crimson&label=%40node-catbox&logo=npm&style=flat-square"></a>
 					<a href="https://www.npmjs.com/package/node-catbox"><img src="https://img.shields.io/npm/dt/node-catbox?color=crimson&logo=npm&style=flat-square"></a>
 					<a href="https://www.npmjs.com/package/node-catbox"><img src="https://img.shields.io/librariesio/release/npm/node-catbox?color=crimson&logo=npm&style=flat-square"></a>
 				</p>
