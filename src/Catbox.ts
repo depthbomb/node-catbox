@@ -57,7 +57,7 @@ type AddFilesToAlbumOptions = {
 	files: string[];
 };
 
-type RemoveFilesToAlbumOptions = {
+type RemoveFilesFromAlbumOptions = {
 	/**
 	 * ID of the album
 	 */
@@ -260,7 +260,7 @@ export class Catbox {
 	 * @param files Files to remove from the album
 	 * @returns The album URL
 	 */
-	public async removeFilesFromAlbum(options: RemoveFilesToAlbumOptions): Promise<string> {
+	public async removeFilesFromAlbum(options: RemoveFilesFromAlbumOptions): Promise<string> {
 		if (!this._userHash) {
 			throw new Error('A user hash is required for this operation.');
 		}
