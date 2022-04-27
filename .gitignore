@@ -5,3 +5,4 @@
 .yarn/install-state.gz
 dist/
 node_modules/
+src/test.ts

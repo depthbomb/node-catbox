@@ -1,6 +1,9 @@
-import fetch from 'node-fetch';
-import FormData from 'form-data';
-import { createReadStream } from 'fs';
+import fetch                              from 'node-fetch';
+import FormData                           from 'form-data';
+import { resolve }                        from 'node:path';
+import { createReadStream }               from 'node:fs';
+
+import { isValidFile }                    from './utils';
 import { USER_AGENT, LITTERBOX_BASE_URL } from './constants';
 
 type UploadOptions = {
@@ -26,11 +29,18 @@ export class Litterbox {
 	 * @returns The uploaded file URL
 	 */
 	public async upload(options: UploadOptions): Promise<string> {
-		const { path, duration } = options;
+		let { path, duration } = options;
+			path = resolve(path);
+			duration = duration ?? '1h';
+
+		if (!await isValidFile(path)) {
+			throw new Error(`Invalid file path ${path}`);
+		}
+
 		const data = new FormData();
 		data.append('reqtype', 'fileupload');
 		data.append('fileToUpload', createReadStream(path));
-		data.append('time', duration ?? '1h');
+		data.append('time', duration);
 
 		const res = await fetch(LITTERBOX_BASE_URL, {
 			method: 'POST',

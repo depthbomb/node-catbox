@@ -1,7 +1,10 @@
-import fetch from 'node-fetch';
-import FormData from 'form-data';
-import { createReadStream } from 'fs';
-import { USER_AGENT, CATBOX_BASE_URL } from './constants';
+import fetch                            from 'node-fetch';
+import FormData                         from 'form-data';
+import { resolve }                      from 'node:path';
+import { createReadStream }             from 'node:fs';
+
+import { isValidFile }                  from './utils';
+import { USER_AGENT, CATBOX_BASE_URL }  from './constants';
 
 type UploadURLOptions = {
 	/**
@@ -120,11 +123,17 @@ export class Catbox {
 	 * @returns The uploaded file URL
 	 */
 	public async uploadFile(options: UploadFileOptions): Promise<string> {
-		const { path } = options;
-		const data = new FormData();
+		let { path } = options;
+			path = resolve(path);
 
+		if (!await isValidFile(path)) {
+			throw new Error(`Invalid file path ${path}`);
+		}
+
+		const data = new FormData();
 		data.append('reqtype', 'fileupload');
 		data.append('fileToUpload', createReadStream(path));
+
 		if (this._userHash) {
 			data.append('userhash', this._userHash);
 		}
