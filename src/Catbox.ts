@@ -1,10 +1,10 @@
-import fetch                            from 'node-fetch';
-import FormData                         from 'form-data';
-import { resolve }                      from 'node:path';
-import { createReadStream }             from 'node:fs';
+import fetch                           from 'node-fetch-native';
+import FormData                        from 'form-data';
+import { resolve }                     from 'node:path';
+import { createReadStream }            from 'node:fs';
 
-import { isValidFile }                  from './utils';
-import { USER_AGENT, CATBOX_BASE_URL }  from './constants';
+import { isValidFile }                 from './utils';
+import { USER_AGENT, CATBOX_BASE_URL } from './constants';
 
 type UploadURLOptions = {
 	/**

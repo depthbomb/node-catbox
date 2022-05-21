@@ -1,4 +1,4 @@
-import fetch                              from 'node-fetch';
+import fetch                              from 'node-fetch-native';
 import FormData                           from 'form-data';
 import { resolve }                        from 'node:path';
 import { createReadStream }               from 'node:fs';

@@ -10,8 +10,6 @@ export default defineConfig((options) => ({
 	dts: true,
 	minify: true,
 	skipNodeModulesBundle: false,
-	splitting: false,
-	sourcemap: true,
 	target: 'esnext',
 	tsconfig: './tsconfig.json',
 	watch: options.watch,
