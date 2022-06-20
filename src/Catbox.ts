@@ -89,6 +89,13 @@ export class Catbox {
 	};
 
 	/**
+	 * The user hash, if available
+	 */
+	public get userHash(): string | undefined {
+		return this._userHash;
+	};
+
+	/**
 	 * Uploads a file via direct URL to Catbox.moe
 	 * 
 	 * Files uploaded while a `userHash` is provided will be tied to your account.
