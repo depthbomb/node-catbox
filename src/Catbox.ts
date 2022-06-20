@@ -78,14 +78,16 @@ type DeleteAlbumOptions = {
 };
 
 export class Catbox {
-	private readonly _userHash?: string;
+	private _userHash?: string;
 
 	/**
 	 * Creates a new {@link Catbox} instance
 	 * @param userHash Optional user hash
 	 */
 	public constructor(userHash?: string) {
-		this._userHash = userHash;
+		if (userHash) {
+			this.setUserHash(userHash);
+		}
 	};
 
 	/**
@@ -93,6 +95,15 @@ export class Catbox {
 	 */
 	public get userHash(): string | undefined {
 		return this._userHash;
+	};
+
+	/**
+	 * Sets the user hash for this instance
+	 * @param userHash Your account's user hash
+	 * @see https://catbox.moe/user/manage.php
+	 */
+	public setUserHash(userHash: string): void {
+		this._userHash = userHash;
 	};
 
 	/**
