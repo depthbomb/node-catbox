@@ -43,30 +43,42 @@ yarn add node-catbox
 import { Catbox } from 'node-catbox';
 
 const catbox = new Catbox();
-// or with a user hash
-const catbox = new Catbox('098f6bcd4621d373cade4e832');
 
 try {
-	const fileURL = await catbox.uploadFile({
+	const response = await catbox.uploadFile({
 		path: '/path/to/my/file.ext'
 	});
 	// or to upload from direct file URL
-	const imageURL = await catbox.uploadURL({
+	const response = await catbox.uploadURL({
 		url: 'https://i.imgur.com/8rR6IZn.png'
 	});
 
-	console.log(fileURL); // -> https://files.catbox.moe/XXXXX.ext
+	console.log(response); // -> https://files.catbox.moe/XXXXX.ext
 } catch (err) {
 	console.error(err); // -> error message from server
 }
 ```
 
-### Deleting files
+### User Hash
+
+Some operations require your account's user hash which can be set on instantiation with
+```ts
+const catbox = new Catbox('098f6bcd4621d373cade4e832');
+```
+... or later with
+```ts
+const catbox = new Catbox();
+
+const catbox.setUserHash('098f6bcd4621d373cade4e832');
+```
+
+### Deleting Files
 
 ```ts
 import { Catbox } from 'node-catbox';
 
-const catbox = new Catbox('098f6bcd4621d373cade4e832'); // user hash required
+// user hash required
+const catbox = new Catbox('098f6bcd4621d373cade4e832');
 
 await catbox.deleteFiles({
 	files: ['XXXXX.ext']
@@ -91,7 +103,8 @@ await litterbox.upload({
 ```ts
 import { Catbox } from 'node-catbox';
 
-const catbox = new Catbox('098f6bcd4621d373cade4e832'); // user hash only required if you plan to edit or delete the album later
+// user hash only required if you plan to edit or delete the album later
+const catbox = new Catbox('098f6bcd4621d373cade4e832');
 
 const albumURL = await catbox.createAlbum({
 	title: 'album title',
@@ -105,7 +118,8 @@ const albumURL = await catbox.createAlbum({
 ```ts
 import { Catbox } from 'node-catbox';
 
-const catbox = new Catbox('098f6bcd4621d373cade4e832'); // user hash required
+// user hash required
+const catbox = new Catbox('098f6bcd4621d373cade4e832');
 
 await catbox.editAlbum({
 	id: 'YYYYY',
@@ -123,7 +137,8 @@ await catbox.editAlbum({
 ```ts
 import { Catbox } from 'node-catbox';
 
-const catbox = new Catbox('098f6bcd4621d373cade4e832'); // user hash required
+// user hash required
+const catbox = new Catbox('098f6bcd4621d373cade4e832');
 
 await catbox.addFilesToAlbum({
 	id: 'YYYYY',
@@ -140,7 +155,8 @@ await catbox.removeFilesFromAlbum({
 ```ts
 import { Catbox } from 'node-catbox';
 
-const catbox = new Catbox('098f6bcd4621d373cade4e832'); // user hash required
+// user hash required
+const catbox = new Catbox('098f6bcd4621d373cade4e832');
 
 await catbox.deleteAlbum({
 	id: 'YYYYY'
