@@ -98,10 +98,10 @@ export class Catbox {
 	public async uploadURL(options: UploadURLOptions): Promise<string> {
 		const { url } = options;
 		const data = new FormData();
-		data.append('reqtype', 'urlupload');
-		data.append('url', url);
+		data.set('reqtype', 'urlupload');
+		data.set('url', url);
 		if (this._userHash) {
-			data.append('userhash', this._userHash);
+			data.set('userhash', this._userHash);
 		}
 
 		const res = await this._doRequest(CATBOX_BASE_URL, data);
@@ -129,11 +129,11 @@ export class Catbox {
 		}
 
 		const data = new FormData();
-		data.append('reqtype', 'fileupload');
-		data.append('fileToUpload', await fileFromPath(path));
+		data.set('reqtype', 'fileupload');
+		data.set('fileToUpload', await fileFromPath(path));
 
 		if (this._userHash) {
-			data.append('userhash', this._userHash);
+			data.set('userhash', this._userHash);
 		}
 
 		const res = await this._doRequest(CATBOX_BASE_URL, data);
@@ -157,9 +157,9 @@ export class Catbox {
 
 		const { files } = options;
 		const data = new FormData();
-		data.append('reqtype', 'deletefiles');
-		data.append('userhash', this._userHash);
-		data.append('files', files.join(' '));
+		data.set('reqtype', 'deletefiles');
+		data.set('userhash', this._userHash);
+		data.set('files', files.join(' '));
 
 		const res = await this._doRequest(CATBOX_BASE_URL, data);
 
@@ -178,16 +178,16 @@ export class Catbox {
 	public async createAlbum(options: CreateAlbumOptions): Promise<string> {
 		const { title, description, files } = options;
 		const data = new FormData();
-		data.append('reqtype', 'createalbum');
-		data.append('title', title);
+		data.set('reqtype', 'createalbum');
+		data.set('title', title);
 		if (description) {
-			data.append('desc', description);
+			data.set('desc', description);
 		}
 		if (files && files.length) {
-			data.append('files', files.join(' '));
+			data.set('files', files.join(' '));
 		}
 		if (this._userHash) {
-			data.append('userhash', this._userHash);
+			data.set('userhash', this._userHash);
 		}
 
 		const res = await this._doRequest(CATBOX_BASE_URL, data);
@@ -215,16 +215,16 @@ export class Catbox {
 
 		const { id, title, description, files } = options;
 		const data = new FormData();
-		data.append('reqtype', 'editalbum');
-		data.append('short', id);
-		data.append('title', title);
+		data.set('reqtype', 'editalbum');
+		data.set('short', id);
+		data.set('title', title);
 		if (description) {
-			data.append('desc', description);
+			data.set('desc', description);
 		}
 		if (files && files.length) {
-			data.append('files', files.join(' '));
+			data.set('files', files.join(' '));
 		}
-		data.append('userhash', this._userHash);
+		data.set('userhash', this._userHash);
 
 		const res = await this._doRequest(CATBOX_BASE_URL, data);
 
@@ -247,10 +247,10 @@ export class Catbox {
 
 		const { id, files } = options;
 		const data = new FormData();
-		data.append('reqtype', 'addtoalbum');
-		data.append('short', id);
-		data.append('files', files.join(' '));
-		data.append('userhash', this._userHash);
+		data.set('reqtype', 'addtoalbum');
+		data.set('short', id);
+		data.set('files', files.join(' '));
+		data.set('userhash', this._userHash);
 
 		const res = await this._doRequest(CATBOX_BASE_URL, data);
 
@@ -274,10 +274,10 @@ export class Catbox {
 
 		const { id, files } = options;
 		const data = new FormData();
-		data.append('reqtype', 'removefromalbum');
-		data.append('short', id);
-		data.append('files', files.join(' '));
-		data.append('userhash', this._userHash);
+		data.set('reqtype', 'removefromalbum');
+		data.set('short', id);
+		data.set('files', files.join(' '));
+		data.set('userhash', this._userHash);
 
 		const res = await this._doRequest(CATBOX_BASE_URL, data);
 
@@ -300,9 +300,9 @@ export class Catbox {
 
 		const { id } = options;
 		const data = new FormData();
-		data.append('reqtype', 'deletealbum');
-		data.append('short', id);
-		data.append('userhash', this._userHash);
+		data.set('reqtype', 'deletealbum');
+		data.set('short', id);
+		data.set('userhash', this._userHash);
 
 		const res = await this._doRequest(CATBOX_BASE_URL, data);
 
