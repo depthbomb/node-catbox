@@ -35,7 +35,7 @@
 		"start": "node .",
 		"build": "tsc",
 		"dist": "tsup",
-		"gcl": "conventional-changelog -p angular -i CHANGELOG.md -s",
+		"release": "yarn dist && release-it",
 		"lint": "eslint ./src --ext .ts"
 	},
 	"dependencies": {
@@ -51,6 +51,7 @@
 		"@typescript-eslint/eslint-plugin": "^5.29.0",
 		"@typescript-eslint/parser": "^5.29.0",
 		"eslint": "^8.18.0",
+		"release-it": "^15.0.0",
 		"tslib": "^2.4.0",
 		"tsup": "^6.1.2",
 		"typescript": "^4.7.4"
