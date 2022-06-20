@@ -1,10 +1,9 @@
-import fetch                           from 'node-fetch-native';
-import FormData                        from 'form-data';
-import { resolve }                     from 'node:path';
-import { createReadStream }            from 'node:fs';
-
 import { isValidFile }                 from './utils';
+import { $fetch }                      from 'ohmyfetch';
+import { resolve }                     from 'node:path';
 import { USER_AGENT, CATBOX_BASE_URL } from './constants';
+import { FormData }                    from 'formdata-node';
+import { fileFromPath }                from 'formdata-node/file-from-path';
 
 type UploadURLOptions = {
 	/**
@@ -22,7 +21,7 @@ type UploadFileOptions = {
 
 type DeleteFilesOptions = {
 	/**
-	 * Array of existing file names (including extensions) to delete
+	 * Array of existing file names (including extension) to delete
 	 */
 	files: string[];
 };
@@ -99,7 +98,6 @@ export class Catbox {
 	public async uploadURL(options: UploadURLOptions): Promise<string> {
 		const { url } = options;
 		const data = new FormData();
-
 		data.append('reqtype', 'urlupload');
 		data.append('url', url);
 		if (this._userHash) {
@@ -132,7 +130,7 @@ export class Catbox {
 
 		const data = new FormData();
 		data.append('reqtype', 'fileupload');
-		data.append('fileToUpload', createReadStream(path));
+		data.append('fileToUpload', await fileFromPath(path));
 
 		if (this._userHash) {
 			data.append('userhash', this._userHash);
@@ -165,10 +163,10 @@ export class Catbox {
 
 		const res = await this._doRequest(CATBOX_BASE_URL, data);
 
-		if (!res.startsWith('Files successfully deleted')) {
+		if (res.includes('successfully')) {
 			return true;
 		} else {
-			throw new Error(res); 
+			throw new Error(res);
 		}
 	};
 
@@ -316,15 +314,14 @@ export class Catbox {
 	};
 
 	private async _doRequest(url: string, data: FormData): Promise<string> {
-		const res = await fetch(url, {
+		const text = await $fetch<string>(url, {
 			method: 'POST',
 			headers: {
 				'user-agent': USER_AGENT
 			},
-			body: data
+			body: data,
+			parseResponse: txt => txt
 		});
-
-		const text = await res.text();
 
 		return text;
 	};

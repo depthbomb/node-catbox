@@ -1,10 +1,9 @@
-import fetch                              from 'node-fetch-native';
-import FormData                           from 'form-data';
-import { resolve }                        from 'node:path';
-import { createReadStream }               from 'node:fs';
-
 import { isValidFile }                    from './utils';
+import { $fetch }                         from 'ohmyfetch';
+import { resolve }                        from 'node:path';
 import { USER_AGENT, LITTERBOX_BASE_URL } from './constants';
+import { FormData }                       from 'formdata-node';
+import { fileFromPath }                   from 'formdata-node/file-from-path';
 
 type UploadOptions = {
 	/**
@@ -30,27 +29,26 @@ export class Litterbox {
 	 */
 	public async upload(options: UploadOptions): Promise<string> {
 		let { path, duration } = options;
-			path = resolve(path);
-			duration = duration ?? '1h';
+		path = resolve(path);
+		duration = duration ?? '1h';
 
 		if (!await isValidFile(path)) {
 			throw new Error(`Invalid file path ${path}`);
 		}
 
 		const data = new FormData();
-		data.append('reqtype', 'fileupload');
-		data.append('fileToUpload', createReadStream(path));
-		data.append('time', duration);
+		data.set('reqtype', 'fileupload');
+		data.set('fileToUpload', await fileFromPath(path));
+		data.set('time', duration);
 
-		const res = await fetch(LITTERBOX_BASE_URL, {
+		const text = await $fetch<string>(LITTERBOX_BASE_URL, {
 			method: 'POST',
 			headers: {
 				'user-agent': USER_AGENT
 			},
-			body: data
+			body: data,
+			parseResponse: txt => txt
 		});
-
-		const text = await res.text();
 
 		if (text.startsWith('https://litter.catbox.moe/')) {
 			return text;

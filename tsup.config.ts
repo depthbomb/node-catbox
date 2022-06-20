@@ -9,9 +9,12 @@ export default defineConfig((options) => ({
 	format: ['cjs', 'esm'],
 	dts: true,
 	minify: true,
-	skipNodeModulesBundle: false,
+	noExternal: [
+		'ohmyfetch',
+		'formdata-node'
+	],
+	skipNodeModulesBundle: true,
 	target: 'esnext',
 	tsconfig: './tsconfig.json',
-	watch: options.watch,
-	keepNames: false
+	splitting: true,
 }));

@@ -115,7 +115,9 @@ await catbox.editAlbum({
 });
 ```
 
-⚠️ This is a potentially destructive method where values are applied to the album directly. Consider using the method below if you are only adding/removing files from an album.
+{% danger %}
+	**Danger:** This is a potentially destructive method where values are applied to the album directly. Consider using the method below if you are only adding/removing files from an album.
+{% enddanger %}
 
 ### Adding and removing files from an album
 
