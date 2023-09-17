@@ -1,5 +1,7 @@
 {
 	"compilerOptions": {
+		"ignoreDeprecations": "5.0",
+
 		// Type Checking
 		"allowUnreachableCode": false,
 		"allowUnusedLabels": false,
