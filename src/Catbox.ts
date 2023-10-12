@@ -1,4 +1,3 @@
-import { $fetch } from 'ohmyfetch';
 import { openAsBlob } from 'node:fs';
 import { isValidFile } from './utils';
 import { resolve, basename } from 'node:path';
@@ -329,15 +328,14 @@ export class Catbox {
 	};
 
 	private async _doRequest(url: string, data: FormData): Promise<string> {
-		const text = await $fetch<string>(url, {
+		const res = await fetch(url, {
 			method: 'POST',
 			headers: {
 				'user-agent': USER_AGENT
 			},
-			body: data,
-			parseResponse: txt => txt
+			body: data
 		});
 
-		return text;
+		return res.text();
 	};
 };

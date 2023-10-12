@@ -1,4 +1,3 @@
-import { $fetch } from 'ohmyfetch';
 import { openAsBlob } from 'node:fs';
 import { isValidFile } from './utils';
 import { resolve, basename } from 'node:path';
@@ -41,15 +40,15 @@ export class Litterbox {
 		data.set('fileToUpload', file, basename(path));
 		data.set('time', duration);
 
-		const text = await $fetch<string>(LITTERBOX_BASE_URL, {
+		const res = await fetch(LITTERBOX_BASE_URL, {
 			method: 'POST',
 			headers: {
 				'user-agent': USER_AGENT
 			},
-			body: data,
-			parseResponse: txt => txt
+			body: data
 		});
 
+		const text = await res.text();
 		if (text.startsWith('https://litter.catbox.moe/')) {
 			return text;
 		} else {

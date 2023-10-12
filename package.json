@@ -41,9 +41,6 @@
 		"release": "yarn dist && release-it",
 		"lint": "eslint ./src --ext .ts"
 	},
-	"dependencies": {
-		"ohmyfetch": "^0.4.21"
-	},
 	"devDependencies": {
 		"@types/eslint": "^8.44.4",
 		"@types/node": "^20.8.4",

@@ -1,2 +1,2 @@
-export { Catbox }    from './Catbox';
+export { Catbox } from './Catbox';
 export { Litterbox } from './Litterbox';

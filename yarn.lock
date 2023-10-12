@@ -1225,15 +1225,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"busboy@npm:^1.6.0":
-  version: 1.6.0
-  resolution: "busboy@npm:1.6.0"
-  dependencies:
-    streamsearch: "npm:^1.1.0"
-  checksum: bee10fa10ea58e7e3e7489ffe4bda6eacd540a17de9f9cd21cc37e297b2dd9fe52b2715a5841afaec82900750d810d01d7edb4b2d456427f449b92b417579763
-  languageName: node
-  linkType: hard
-
 "cac@npm:^6.7.12":
   version: 6.7.12
   resolution: "cac@npm:6.7.12"
@@ -1778,13 +1769,6 @@ __metadata:
   version: 2.3.1
   resolution: "deprecation@npm:2.3.1"
   checksum: f56a05e182c2c195071385455956b0c4106fe14e36245b00c689ceef8e8ab639235176a96977ba7c74afb173317fac2e0ec6ec7a1c6d1e6eaa401c586c714132
-  languageName: node
-  linkType: hard
-
-"destr@npm:^1.2.0":
-  version: 1.2.2
-  resolution: "destr@npm:1.2.2"
-  checksum: 6e8174a58dc2185c2e1e97a4656ca29946b686a382e858d681efa4380f03b80c881c4572072af61dd84d25120106f622393ac2ff894cc186c735510b50a4d977
   languageName: node
   linkType: hard
 
@@ -4041,7 +4025,6 @@ __metadata:
     "@typescript-eslint/eslint-plugin": "npm:^6.7.5"
     "@typescript-eslint/parser": "npm:^6.7.5"
     eslint: "npm:^8.51.0"
-    ohmyfetch: "npm:^0.4.21"
     release-it: "npm:^16.2.1"
     terser: "npm:^5.21.0"
     tsup: "npm:^7.2.0"
@@ -4053,13 +4036,6 @@ __metadata:
   version: 1.0.0
   resolution: "node-domexception@npm:1.0.0"
   checksum: e332522f242348c511640c25a6fc7da4f30e09e580c70c6b13cb0be83c78c3e71c8d4665af2527e869fc96848924a4316ae7ec9014c091e2156f41739d4fa233
-  languageName: node
-  linkType: hard
-
-"node-fetch-native@npm:^0.1.8":
-  version: 0.1.8
-  resolution: "node-fetch-native@npm:0.1.8"
-  checksum: 509bbfd5755ffabb5411c9f55d55c15ec9fde7d5a152f88b65396fe40469e33c20d8152ebf004d957bfdcea325a0d5cd51e9c7232c1b6c1263db04c3cc1440b4
   languageName: node
   linkType: hard
 
@@ -4207,18 +4183,6 @@ __metadata:
     has-symbols: "npm:^1.0.3"
     object-keys: "npm:^1.1.1"
   checksum: fd82d45289df0a952d772817622ecbaeb4ec933d3abb53267aede083ee38f6a395af8fadfbc569ee575115b0b7c9b286e7cfb2b7a2557b1055f7acbce513bc29
-  languageName: node
-  linkType: hard
-
-"ohmyfetch@npm:^0.4.21":
-  version: 0.4.21
-  resolution: "ohmyfetch@npm:0.4.21"
-  dependencies:
-    destr: "npm:^1.2.0"
-    node-fetch-native: "npm:^0.1.8"
-    ufo: "npm:^0.8.6"
-    undici: "npm:^5.12.0"
-  checksum: 203bdeb958276da764318cfeecb79b475a421c66f4e4ebf558afe2ff2b4efc2d12d719cc54f63b9e9fa1d1f0a5bf88f5829a7ac795682b4b53bd2c0a2b6ce129
   languageName: node
   linkType: hard
 
@@ -5159,13 +5123,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"streamsearch@npm:^1.1.0":
-  version: 1.1.0
-  resolution: "streamsearch@npm:1.1.0"
-  checksum: 612c2b2a7dbcc859f74597112f80a42cbe4d448d03da790d5b7b39673c1197dd3789e91cd67210353e58857395d32c1e955a9041c4e6d5bae723436b3ed9ed14
-  languageName: node
-  linkType: hard
-
 "string-width@npm:^1.0.2 || 2 || 3 || 4, string-width@npm:^4.1.0, string-width@npm:^4.2.3":
   version: 4.2.3
   resolution: "string-width@npm:4.2.3"
@@ -5620,13 +5577,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ufo@npm:^0.8.6":
-  version: 0.8.6
-  resolution: "ufo@npm:0.8.6"
-  checksum: b4294d8f938ad205a6e44bf55fa9134e75655f10fd3f49e587e0b7511ed308ba80bb87159a3e9d0fa1a0c7edbdf4000c64c558eb88cf3c09df7ffdd976ada7a5
-  languageName: node
-  linkType: hard
-
 "unbox-primitive@npm:^1.0.2":
   version: 1.0.2
   resolution: "unbox-primitive@npm:1.0.2"
@@ -5643,15 +5593,6 @@ __metadata:
   version: 5.25.3
   resolution: "undici-types@npm:5.25.3"
   checksum: 9a57f2dd6fecb2d0f7d9b86aa6f417609a0ffc73247a95aa25c078cf36cbbfe6c164b63b8dace7ad01126e6510f284c185b69c78356bb1d6b279f195acffcaf4
-  languageName: node
-  linkType: hard
-
-"undici@npm:^5.12.0":
-  version: 5.24.0
-  resolution: "undici@npm:5.24.0"
-  dependencies:
-    busboy: "npm:^1.6.0"
-  checksum: ae43417f36e7adf14bfae9a632352a9a53ce8ca6a3c6c5ff9e3561a17c5f999a1dfdd85072f270dfab75224a63b143780b2fc3e9a6000eb7878d6c67c894a4a1
   languageName: node
   linkType: hard
 
