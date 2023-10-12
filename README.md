@@ -25,6 +25,10 @@
 
 This library aims to be a sort of successor to [https://www.npmjs.com/package/catbox.moe](https://www.npmjs.com/package/catbox.moe).
 
+# Requirements
+
+- \>= Node.js 19
+
 # Installation
 
 ```sh

@@ -8,13 +8,9 @@ export default defineConfig((options) => ({
 	],
 	format: ['cjs', 'esm'],
 	dts: true,
-	minify: true,
-	noExternal: [
-		'ohmyfetch',
-		'formdata-node'
-	],
+	minify: 'terser',
 	skipNodeModulesBundle: true,
-	target: 'esnext',
+	target: 'node19',
 	tsconfig: './tsconfig.json',
 	splitting: true,
 }));
