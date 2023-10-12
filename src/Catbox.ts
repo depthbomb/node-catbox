@@ -1,9 +1,8 @@
-import { isValidFile }                 from './utils';
-import { $fetch }                      from 'ohmyfetch';
-import { resolve }                     from 'node:path';
+import { $fetch } from 'ohmyfetch';
+import { openAsBlob } from 'node:fs';
+import { isValidFile } from './utils';
+import { resolve, basename } from 'node:path';
 import { USER_AGENT, CATBOX_BASE_URL } from './constants';
-import { FormData }                    from 'formdata-node';
-import { fileFromPath }                from 'formdata-node/file-from-path';
 
 type UploadURLOptions = {
 	/**
@@ -108,7 +107,7 @@ export class Catbox {
 
 	/**
 	 * Uploads a file via direct URL to Catbox.moe
-	 * 
+	 *
 	 * Files uploaded while a `userHash` is provided will be tied to your account.
 	 * @param options Options
 	 * @returns The uploaded file URL
@@ -118,12 +117,12 @@ export class Catbox {
 		const data = new FormData();
 		data.set('reqtype', 'urlupload');
 		data.set('url', url);
+
 		if (this._userHash) {
 			data.set('userhash', this._userHash);
 		}
 
 		const res = await this._doRequest(CATBOX_BASE_URL, data);
-
 		if (res.startsWith('https://files.catbox.moe/')) {
 			return res;
 		} else {
@@ -133,29 +132,30 @@ export class Catbox {
 
 	/**
 	 * Uploads a file via its path to Catbox.moe
-	 * 
+	 *
 	 * Files uploaded while a `userHash` is provided will be tied to your account.
 	 * @param options Options
 	 * @returns The uploaded file URL
 	 */
 	public async uploadFile(options: UploadFileOptions): Promise<string> {
 		let { path } = options;
-			path = resolve(path);
+
+		path = resolve(path);
 
 		if (!await isValidFile(path)) {
 			throw new Error(`Invalid file path ${path}`);
 		}
 
+		const file = await openAsBlob(path);
 		const data = new FormData();
 		data.set('reqtype', 'fileupload');
-		data.set('fileToUpload', await fileFromPath(path));
+		data.set('fileToUpload', file, basename(path));
 
 		if (this._userHash) {
 			data.set('userhash', this._userHash);
 		}
 
 		const res = await this._doRequest(CATBOX_BASE_URL, data);
-
 		if (res.startsWith('https://files.catbox.moe/')) {
 			return res;
 		} else {
@@ -180,7 +180,6 @@ export class Catbox {
 		data.set('files', files.join(' '));
 
 		const res = await this._doRequest(CATBOX_BASE_URL, data);
-
 		if (res.includes('successfully')) {
 			return true;
 		} else {
@@ -209,7 +208,6 @@ export class Catbox {
 		}
 
 		const res = await this._doRequest(CATBOX_BASE_URL, data);
-
 		if (res.startsWith('https://catbox.moe/c/')) {
 			return res;
 		} else {
@@ -219,9 +217,9 @@ export class Catbox {
 
 	/**
 	 * Edits an existing album
-	 * 
+	 *
 	 * Values are treated as direct input. For example omitting the description will remove the album's description and supplying a new array of files will change the album's files.
-	 * 
+	 *
 	 * Consider using the less-destructive {@link addFilesToAlbum} or {@link removeFilesToAlbum} methods if you wish to only modify album contents.
 	 * @param options Options
 	 * @returns The album URL
@@ -236,16 +234,18 @@ export class Catbox {
 		data.set('reqtype', 'editalbum');
 		data.set('short', id);
 		data.set('title', title);
+
 		if (description) {
 			data.set('desc', description);
 		}
+
 		if (files && files.length) {
 			data.set('files', files.join(' '));
 		}
+
 		data.set('userhash', this._userHash);
 
 		const res = await this._doRequest(CATBOX_BASE_URL, data);
-
 		if (res === `https://catbox.moe/c/${id}`) {
 			return res;
 		} else {
@@ -271,7 +271,6 @@ export class Catbox {
 		data.set('userhash', this._userHash);
 
 		const res = await this._doRequest(CATBOX_BASE_URL, data);
-
 		if (res === `https://catbox.moe/c/${id}`) {
 			return res;
 		} else {
@@ -298,7 +297,6 @@ export class Catbox {
 		data.set('userhash', this._userHash);
 
 		const res = await this._doRequest(CATBOX_BASE_URL, data);
-
 		if (res === `https://catbox.moe/c/${id}`) {
 			return res;
 		} else {
@@ -323,7 +321,6 @@ export class Catbox {
 		data.set('userhash', this._userHash);
 
 		const res = await this._doRequest(CATBOX_BASE_URL, data);
-
 		if (res.length === 0) {
 			return true;
 		} else {

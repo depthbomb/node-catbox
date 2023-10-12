@@ -1,9 +1,8 @@
-import { isValidFile }                    from './utils';
-import { $fetch }                         from 'ohmyfetch';
-import { resolve }                        from 'node:path';
+import { $fetch } from 'ohmyfetch';
+import { openAsBlob } from 'node:fs';
+import { isValidFile } from './utils';
+import { resolve, basename } from 'node:path';
 import { USER_AGENT, LITTERBOX_BASE_URL } from './constants';
-import { FormData }                       from 'formdata-node';
-import { fileFromPath }                   from 'formdata-node/file-from-path';
 
 type UploadOptions = {
 	/**
@@ -36,9 +35,10 @@ export class Litterbox {
 			throw new Error(`Invalid file path ${path}`);
 		}
 
+		const file = await  openAsBlob(path);
 		const data = new FormData();
 		data.set('reqtype', 'fileupload');
-		data.set('fileToUpload', await fileFromPath(path));
+		data.set('fileToUpload', file, basename(path));
 		data.set('time', duration);
 
 		const text = await $fetch<string>(LITTERBOX_BASE_URL, {

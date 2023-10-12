@@ -34,8 +34,8 @@
 		"forceConsistentCasingInFileNames": true,
 
 		// Language and Environment
-		"emitDecoratorMetadata": true,
-		"experimentalDecorators": true,
+		"emitDecoratorMetadata": false,
+		"experimentalDecorators": false,
 		"lib": ["ESNext"],
 		"target": "ESNext",
 		"useDefineForClassFields": true,
