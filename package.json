@@ -5,7 +5,7 @@
 	"description": "A library for interacting with Catbox.moe written in TypeScript.",
 	"license": "MIT",
 	"engines": {
-		"node": ">=19.0.0"
+		"node": ">=19"
 	},
 	"keywords": [
 		"catbox.moe",
