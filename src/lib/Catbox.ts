@@ -1,7 +1,7 @@
 import { openAsBlob } from 'node:fs';
 import { isValidFile } from '../utils';
 import { resolve, basename } from 'node:path';
-import { CATBOX_BASE_URL } from '../constants';
+import { USER_AGENT, CATBOX_BASE_URL } from '../constants';
 
 type UploadURLOptions = {
 	/**
@@ -331,7 +331,7 @@ export class Catbox {
 		const res = await fetch(url, {
 			method: 'POST',
 			headers: {
-				'user-agent': __USER_AGENT__
+				'user-agent': USER_AGENT
 			},
 			body: data
 		});
