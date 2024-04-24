@@ -11,7 +11,7 @@ type UploadOptions = {
 	/**
 	 * Duration before the file is deleted, defaults to `1h`
 	 */
-	duration?: '1h' | '12h' | '24h' | '72h';
+	duration?: '1h' | '12h' | '24h' | '72h' | string & {};
 };
 
 export class Litterbox {
