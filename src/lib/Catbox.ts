@@ -1,7 +1,7 @@
 import { openAsBlob } from 'node:fs';
 import { isValidFile } from '../utils';
 import { resolve, basename } from 'node:path';
-import { USER_AGENT, CATBOX_BASE_URL } from '../constants';
+import { USER_AGENT, CATBOX_API_ENDPOINT } from '../constants';
 
 type UploadURLOptions = {
 	/**
@@ -121,7 +121,7 @@ export class Catbox {
 			data.set('userhash', this._userHash);
 		}
 
-		const res = await this._doRequest(CATBOX_BASE_URL, data);
+		const res = await this._doRequest(CATBOX_API_ENDPOINT, data);
 		if (res.startsWith('https://files.catbox.moe/')) {
 			return res;
 		} else {
@@ -154,7 +154,7 @@ export class Catbox {
 			data.set('userhash', this._userHash);
 		}
 
-		const res = await this._doRequest(CATBOX_BASE_URL, data);
+		const res = await this._doRequest(CATBOX_API_ENDPOINT, data);
 		if (res.startsWith('https://files.catbox.moe/')) {
 			return res;
 		} else {
@@ -178,7 +178,7 @@ export class Catbox {
 		data.set('userhash', this._userHash);
 		data.set('files', files.join(' '));
 
-		const res = await this._doRequest(CATBOX_BASE_URL, data);
+		const res = await this._doRequest(CATBOX_API_ENDPOINT, data);
 		if (res.includes('successfully')) {
 			return true;
 		} else {
@@ -206,7 +206,7 @@ export class Catbox {
 			data.set('userhash', this._userHash);
 		}
 
-		const res = await this._doRequest(CATBOX_BASE_URL, data);
+		const res = await this._doRequest(CATBOX_API_ENDPOINT, data);
 		if (res.startsWith('https://catbox.moe/c/')) {
 			return res;
 		} else {
@@ -244,7 +244,7 @@ export class Catbox {
 
 		data.set('userhash', this._userHash);
 
-		const res = await this._doRequest(CATBOX_BASE_URL, data);
+		const res = await this._doRequest(CATBOX_API_ENDPOINT, data);
 		if (res === `https://catbox.moe/c/${id}`) {
 			return res;
 		} else {
@@ -269,7 +269,7 @@ export class Catbox {
 		data.set('files', files.join(' '));
 		data.set('userhash', this._userHash);
 
-		const res = await this._doRequest(CATBOX_BASE_URL, data);
+		const res = await this._doRequest(CATBOX_API_ENDPOINT, data);
 		if (res === `https://catbox.moe/c/${id}`) {
 			return res;
 		} else {
@@ -295,7 +295,7 @@ export class Catbox {
 		data.set('files', files.join(' '));
 		data.set('userhash', this._userHash);
 
-		const res = await this._doRequest(CATBOX_BASE_URL, data);
+		const res = await this._doRequest(CATBOX_API_ENDPOINT, data);
 		if (res === `https://catbox.moe/c/${id}`) {
 			return res;
 		} else {
@@ -319,7 +319,7 @@ export class Catbox {
 		data.set('short', id);
 		data.set('userhash', this._userHash);
 
-		const res = await this._doRequest(CATBOX_BASE_URL, data);
+		const res = await this._doRequest(CATBOX_API_ENDPOINT, data);
 		if (res.length === 0) {
 			return true;
 		} else {

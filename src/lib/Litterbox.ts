@@ -1,7 +1,7 @@
 import { openAsBlob } from 'node:fs';
 import { isValidFile } from '../utils';
 import { resolve, basename } from 'node:path';
-import { USER_AGENT, LITTERBOX_BASE_URL } from '../constants';
+import { USER_AGENT, LITTERBOX_API_ENDPOINT } from '../constants';
 
 type UploadOptions = {
 	/**
@@ -48,7 +48,7 @@ export class Litterbox {
 		data.set('fileToUpload', file, basename(path));
 		data.set('time', duration);
 
-		const res = await fetch(LITTERBOX_BASE_URL, {
+		const res = await fetch(LITTERBOX_API_ENDPOINT, {
 			method: 'POST',
 			headers: {
 				'user-agent': USER_AGENT
