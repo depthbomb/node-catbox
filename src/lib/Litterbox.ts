@@ -28,13 +28,21 @@ export class Litterbox {
 	public async upload(options: UploadOptions): Promise<string> {
 		let { path, duration } = options;
 		path = resolve(path);
-		duration = duration ?? '1h';
 
 		if (!await isValidFile(path)) {
-			throw new Error(`Invalid file path ${path}`);
+			throw new Error(`Invalid file path "${path}"`);
 		}
 
-		const file = await  openAsBlob(path);
+		if (duration) {
+			const acceptedDurations = ['1h', '12h', '24h', '72h'];
+			if (!acceptedDurations.includes(duration)) {
+				throw new Error(`Invalid duration "${duration}", accepted values are ${acceptedDurations.join(', ')}`);
+			}
+		} else {
+			duration = '1h';
+		}
+
+		const file = await openAsBlob(path);
 		const data = new FormData();
 		data.set('reqtype', 'fileupload');
 		data.set('fileToUpload', file, basename(path));
