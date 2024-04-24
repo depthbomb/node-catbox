@@ -121,7 +121,7 @@ export class Catbox {
 			data.set('userhash', this._userHash);
 		}
 
-		const res = await this._doRequest(CATBOX_API_ENDPOINT, data);
+		const res = await this._doRequest(data);
 		if (res.startsWith('https://files.catbox.moe/')) {
 			return res;
 		} else {
@@ -154,7 +154,7 @@ export class Catbox {
 			data.set('userhash', this._userHash);
 		}
 
-		const res = await this._doRequest(CATBOX_API_ENDPOINT, data);
+		const res = await this._doRequest(data);
 		if (res.startsWith('https://files.catbox.moe/')) {
 			return res;
 		} else {
@@ -178,7 +178,7 @@ export class Catbox {
 		data.set('userhash', this._userHash);
 		data.set('files', files.join(' '));
 
-		const res = await this._doRequest(CATBOX_API_ENDPOINT, data);
+		const res = await this._doRequest(data);
 		if (res.includes('successfully')) {
 			return true;
 		} else {
@@ -206,7 +206,7 @@ export class Catbox {
 			data.set('userhash', this._userHash);
 		}
 
-		const res = await this._doRequest(CATBOX_API_ENDPOINT, data);
+		const res = await this._doRequest(data);
 		if (res.startsWith('https://catbox.moe/c/')) {
 			return res;
 		} else {
@@ -244,7 +244,7 @@ export class Catbox {
 
 		data.set('userhash', this._userHash);
 
-		const res = await this._doRequest(CATBOX_API_ENDPOINT, data);
+		const res = await this._doRequest(data);
 		if (res === `https://catbox.moe/c/${id}`) {
 			return res;
 		} else {
@@ -269,7 +269,7 @@ export class Catbox {
 		data.set('files', files.join(' '));
 		data.set('userhash', this._userHash);
 
-		const res = await this._doRequest(CATBOX_API_ENDPOINT, data);
+		const res = await this._doRequest(data);
 		if (res === `https://catbox.moe/c/${id}`) {
 			return res;
 		} else {
@@ -295,7 +295,7 @@ export class Catbox {
 		data.set('files', files.join(' '));
 		data.set('userhash', this._userHash);
 
-		const res = await this._doRequest(CATBOX_API_ENDPOINT, data);
+		const res = await this._doRequest(data);
 		if (res === `https://catbox.moe/c/${id}`) {
 			return res;
 		} else {
@@ -319,7 +319,7 @@ export class Catbox {
 		data.set('short', id);
 		data.set('userhash', this._userHash);
 
-		const res = await this._doRequest(CATBOX_API_ENDPOINT, data);
+		const res = await this._doRequest(data);
 		if (res.length === 0) {
 			return true;
 		} else {
@@ -327,8 +327,8 @@ export class Catbox {
 		}
 	};
 
-	private async _doRequest(url: string, data: FormData): Promise<string> {
-		const res = await fetch(url, {
+	private async _doRequest(data: FormData): Promise<string> {
+		const res = await fetch(CATBOX_API_ENDPOINT, {
 			method: 'POST',
 			headers: {
 				'user-agent': USER_AGENT
