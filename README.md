@@ -86,19 +86,6 @@ await catbox.deleteFiles({
 });
 ```
 
-### Uploading to Litterbox
-
-```ts
-import { Litterbox } from 'node-catbox';
-
-const litterbox = new Litterbox();
-
-await litterbox.upload({
-	path: '/path/to/my/file.ext',
-	duration: '12h' // or omit to default to 1h
-});
-```
-
 ### Creating an album
 
 ```ts
@@ -161,5 +148,18 @@ const catbox = new Catbox('098f6bcd4621d373cade4e832');
 
 await catbox.deleteAlbum({
 	id: 'YYYYY'
+});
+```
+
+### Uploading to Litterbox
+
+```ts
+import { Litterbox } from 'node-catbox';
+
+const litterbox = new Litterbox();
+
+await litterbox.upload({
+	path: '/path/to/my/file.ext',
+	duration: '12h' // or omit to default to 1h
 });
 ```
