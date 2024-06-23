@@ -86,14 +86,14 @@ export class Catbox {
 		if (userHash) {
 			this.setUserHash(userHash);
 		}
-	};
+	}
 
 	/**
 	 * The user hash, if available
 	 */
 	public get userHash(): string | undefined {
 		return this._userHash;
-	};
+	}
 
 	/**
 	 * Sets the user hash for this instance
@@ -102,7 +102,7 @@ export class Catbox {
 	 */
 	public setUserHash(userHash: string): void {
 		this._userHash = userHash;
-	};
+	}
 
 	/**
 	 * Uploads a file via direct URL to Catbox.moe
@@ -127,7 +127,7 @@ export class Catbox {
 		} else {
 			throw new Error(res);
 		}
-	};
+	}
 
 	/**
 	 * Uploads a file via its path to Catbox.moe
@@ -142,7 +142,7 @@ export class Catbox {
 		path = resolve(path);
 
 		if (!await isValidFile(path)) {
-			throw new Error(`Invalid file path ${path}`);
+			throw new Error(`Invalid file path "${path}"`);
 		}
 
 		const file = await openAsBlob(path);
@@ -160,7 +160,7 @@ export class Catbox {
 		} else {
 			throw new Error(res);
 		}
-	};
+	}
 
 	/**
 	 * Deletes files from the user account
@@ -184,7 +184,7 @@ export class Catbox {
 		} else {
 			throw new Error(res);
 		}
-	};
+	}
 
 	/**
 	 * Creates an album
@@ -212,7 +212,7 @@ export class Catbox {
 		} else {
 			throw new Error(res);
 		}
-	};
+	}
 
 	/**
 	 * Edits an existing album
@@ -250,7 +250,7 @@ export class Catbox {
 		} else {
 			throw new Error(res);
 		}
-	};
+	}
 
 	/**
 	 * Adds existing files to an album
@@ -275,7 +275,7 @@ export class Catbox {
 		} else {
 			throw new Error(res);
 		}
-	};
+	}
 
 	/**
 	 * Removes files from an album
@@ -301,7 +301,7 @@ export class Catbox {
 		} else {
 			throw new Error(res);
 		}
-	};
+	}
 
 	/**
 	 * Deletes an album
@@ -325,7 +325,7 @@ export class Catbox {
 		} else {
 			throw new Error(res);
 		}
-	};
+	}
 
 	private async _doRequest(data: FormData): Promise<string> {
 		const res = await fetch(CATBOX_API_ENDPOINT, {
@@ -337,5 +337,5 @@ export class Catbox {
 		});
 
 		return res.text();
-	};
-};
+	}
+}

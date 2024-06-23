@@ -163,3 +163,7 @@ await litterbox.upload({
 	duration: '12h' // or omit to default to 1h
 });
 ```
+
+# Testing
+
+Before you test the library you need to provide your Catbox account's user hash. Create a `.env` file in the project root and set the `USER_HASH` value to your account's user hash.

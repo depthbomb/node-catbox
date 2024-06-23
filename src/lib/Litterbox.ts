@@ -18,7 +18,7 @@ export class Litterbox {
 	/**
 	 * Creates a new {@link Litterbox} instance
 	 */
-	public constructor() {};
+	public constructor() {}
 
 	/**
 	 * Uploads a file temporarily to Litterbox
@@ -62,5 +62,5 @@ export class Litterbox {
 		} else {
 			throw new Error(text);
 		}
-	};
-};
+	}
+}
