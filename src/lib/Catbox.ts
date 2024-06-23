@@ -1,6 +1,7 @@
 import { openAsBlob } from 'node:fs';
 import { isValidFile } from '../utils';
 import { resolve, basename } from 'node:path';
+import { catboxChannels, litterboxChannels } from '../diagnostics';
 import { USER_AGENT, CATBOX_API_ENDPOINT } from '../constants';
 
 type UploadURLOptions = {
@@ -328,13 +329,17 @@ export class Catbox {
 	}
 
 	private async _doRequest(data: FormData): Promise<string> {
-		const res = await fetch(CATBOX_API_ENDPOINT, {
+		const init: RequestInit = {
 			method: 'POST',
 			headers: {
 				'user-agent': USER_AGENT
 			},
 			body: data
-		});
+		};
+
+		if (catboxChannels.create.hasSubscribers) catboxChannels.create.publish({ request: init });
+
+		const res = await fetch(CATBOX_API_ENDPOINT, init);
 
 		return res.text();
 	}

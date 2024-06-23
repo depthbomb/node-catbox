@@ -164,6 +164,22 @@ await litterbox.upload({
 });
 ```
 
+# Logging requests
+
+As of 3.2.0, `node:diagnostics_channel` may be utilized to retrieve the request info that is sent to the API. The example below shows how to log the request info:
+
+```ts
+import { subscribe } from 'diagnostics_channel';
+import { kCatboxRequestCreate } from 'node-catbox';
+// kLitterboxRequestCreate is also available
+
+subscribe(kCatboxRequestCreate, (data: any) => {
+	const request: RequestInit = data.request;
+
+	console.log(request);
+});
+```
+
 # Testing
 
 Before you test the library you need to provide your Catbox account's user hash. Create a `.env` file in the project root and set the `USER_HASH` value to your account's user hash.

@@ -1,6 +1,7 @@
 import { openAsBlob } from 'node:fs';
 import { isValidFile } from '../utils';
 import { resolve, basename } from 'node:path';
+import { litterboxChannels } from '../diagnostics';
 import { USER_AGENT, LITTERBOX_API_ENDPOINT } from '../constants';
 
 type UploadOptions = {
@@ -48,13 +49,17 @@ export class Litterbox {
 		data.set('fileToUpload', file, basename(path));
 		data.set('time', duration);
 
-		const res = await fetch(LITTERBOX_API_ENDPOINT, {
+		const init: RequestInit = {
 			method: 'POST',
 			headers: {
 				'user-agent': USER_AGENT
 			},
 			body: data
-		});
+		};
+
+		if (litterboxChannels.create.hasSubscribers) litterboxChannels.create.publish({ request: init });
+
+		const res = await fetch(LITTERBOX_API_ENDPOINT, init);
 
 		const text = await res.text();
 		if (text.startsWith('https://litter.catbox.moe/')) {
