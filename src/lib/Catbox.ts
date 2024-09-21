@@ -33,7 +33,7 @@ type CreateAlbumOptions = {
 	/**
 	 * Description of the album
 	 */
-	description?: string;
+	description: string;
 	/**
 	 * Names of existing files that the album should contain
 	 */
@@ -197,9 +197,8 @@ export class Catbox {
 		const data = new FormData();
 		data.set('reqtype', 'createalbum');
 		data.set('title', title);
-		if (description) {
-			data.set('desc', description);
-		}
+		data.set('desc', description);
+
 		if (files && files.length) {
 			data.set('files', files.join(' '));
 		}
@@ -234,10 +233,7 @@ export class Catbox {
 		data.set('reqtype', 'editalbum');
 		data.set('short', id);
 		data.set('title', title);
-
-		if (description) {
-			data.set('desc', description);
-		}
+		data.set('desc', description);
 
 		if (files && files.length) {
 			data.set('files', files.join(' '));
