@@ -22,7 +22,6 @@
 		// Emit
 		"declaration": true,
 		"importHelpers": true,
-		"importsNotUsedAsValues": "error",
 		"inlineSources": true,
 		"newLine": "lf",
 		"noEmitHelpers": true,
