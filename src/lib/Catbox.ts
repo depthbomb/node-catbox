@@ -220,7 +220,7 @@ export class Catbox {
 	 *
 	 * Values are treated as direct input. For example omitting the description will remove the album's description and supplying a new array of files will change the album's files.
 	 *
-	 * Consider using the less-destructive {@link addFilesToAlbum} or {@link removeFilesToAlbum} methods if you wish to only modify album contents.
+	 * Consider using the less-destructive {@link addFilesToAlbum} or {@link removeFilesFromAlbum} methods if you wish to only modify album contents.
 	 * @param options Options
 	 * @returns The album URL
 	 */
