@@ -96,7 +96,7 @@ const catbox = new Catbox('098f6bcd4621d373cade4e832');
 
 const albumURL = await catbox.createAlbum({
 	title: 'album title',
-	description: 'album description', // optional
+	description: 'album description',
 	files: ['XXXXX.ext'] // optional
 });
 ```
@@ -112,7 +112,7 @@ const catbox = new Catbox('098f6bcd4621d373cade4e832');
 await catbox.editAlbum({
 	id: 'YYYYY',
 	title: 'new title',
-	description: 'new description', // optional
+	description: 'new description',
 	files:  ['WWWWW.ext', 'VVVVV.ext'] // optional
 });
 ```
