@@ -44,16 +44,16 @@
 	},
 	"devDependencies": {
 		"@types/eslint": "^9.6.1",
-		"@types/node": "^22.13.9",
-		"@typescript-eslint/eslint-plugin": "^8.26.0",
-		"@typescript-eslint/parser": "^8.26.0",
-		"dotenv": "^16.4.7",
-		"eslint": "^9.21.0",
+		"@types/node": "^22.14.1",
+		"@typescript-eslint/eslint-plugin": "^8.30.1",
+		"@typescript-eslint/parser": "^8.30.1",
+		"dotenv": "^16.5.0",
+		"eslint": "^9.24.0",
 		"release-it": "^18.1.2",
 		"terser": "^5.39.0",
 		"tsup": "^8.4.0",
-		"typescript": "^5.8.2",
-		"vitest": "^3.0.7"
+		"typescript": "^5.8.3",
+		"vitest": "^3.1.1"
 	},
-	"packageManager": "yarn@4.7.0"
+	"packageManager": "yarn@4.9.1"
 }
