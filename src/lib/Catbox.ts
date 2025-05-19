@@ -290,8 +290,7 @@ export class Catbox {
 
 	/**
 	 * Removes files from an album
-	 * @param id ID of the album to add files to
-	 * @param files Files to remove from the album
+	 * @param options Options
 	 * @returns The album URL
 	 */
 	public async removeFilesFromAlbum({ id, files }: RemoveFilesFromAlbumOptions): Promise<string> {
@@ -315,7 +314,7 @@ export class Catbox {
 
 	/**
 	 * Deletes an album
-	 * @param id ID of the album to delete
+	 * @param options Options
 	 * @returns `true` if the album was deleted or if the album doesn't exist
 	 */
 	public async removeAlbum({ id }: DeleteAlbumOptions): Promise<boolean> {
