@@ -26,8 +26,7 @@ export class Litterbox {
 	 * @param options Options
 	 * @returns The uploaded file URL
 	 */
-	public async upload(options: UploadOptions): Promise<string> {
-		let { path, duration } = options;
+	public async upload({ path, duration }: UploadOptions): Promise<string> {
 		path = resolve(path);
 
 		if (!await isValidFile(path)) {
@@ -57,10 +56,11 @@ export class Litterbox {
 			body: data
 		};
 
-		if (litterboxChannels.create.hasSubscribers) litterboxChannels.create.publish({ request: init });
+		if (litterboxChannels.create.hasSubscribers) {
+			litterboxChannels.create.publish({ request: init });
+		}
 
-		const res = await fetch(LITTERBOX_API_ENDPOINT, init);
-
+		const res  = await fetch(LITTERBOX_API_ENDPOINT, init);
 		const text = await res.text();
 		if (text.startsWith('https://litter.catbox.moe/')) {
 			return text;

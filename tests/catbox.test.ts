@@ -2,6 +2,7 @@ import { config } from 'dotenv';
 import { basename } from 'node:path';
 import { Catbox } from '../dist/index';
 import { test, assert, expect } from 'vitest';
+import { createReadStream } from 'node:fs';
 
 config({ path: './.env' });
 
@@ -14,6 +15,10 @@ const invalidFilePath = '../../../should/not/exist.exe';
 
 test('uploads from file path', async () => {
 	await expect(cb.uploadFile({ path: testFilePath })).resolves.toContain('https://files.catbox.moe/');
+});
+
+test('uploads from stream', async () => {
+	await expect(cb.uploadFileStream({ stream: createReadStream(testFilePath), filename: basename(testFilePath) })).resolves.toContain('https://files.catbox.moe/');
 });
 
 test('throws on invalid file path', async () => {

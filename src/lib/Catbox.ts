@@ -1,7 +1,8 @@
 import { openAsBlob } from 'node:fs';
 import { isValidFile } from '../utils';
+import { blob } from 'node:stream/consumers';
 import { resolve, basename } from 'node:path';
-import { catboxChannels, litterboxChannels } from '../diagnostics';
+import { catboxChannels } from '../diagnostics';
 import { USER_AGENT, CATBOX_API_ENDPOINT } from '../constants';
 
 type UploadURLOptions = {
@@ -16,6 +17,11 @@ type UploadFileOptions = {
 	 * Path to the file to upload
 	 */
 	path: string;
+};
+
+type UploadFileStreamOptions = {
+	stream: ReadableStream | AsyncIterable<any>;
+	filename: string;
 };
 
 type DeleteFilesOptions = {
@@ -112,8 +118,7 @@ export class Catbox {
 	 * @param options Options
 	 * @returns The uploaded file URL
 	 */
-	public async uploadURL(options: UploadURLOptions): Promise<string> {
-		const { url } = options;
+	public async uploadURL({ url }: UploadURLOptions): Promise<string> {
 		const data = new FormData();
 		data.set('reqtype', 'urlupload');
 		data.set('url', url);
@@ -137,9 +142,7 @@ export class Catbox {
 	 * @param options Options
 	 * @returns The uploaded file URL
 	 */
-	public async uploadFile(options: UploadFileOptions): Promise<string> {
-		let { path } = options;
-
+	public async uploadFile({ path }: UploadFileOptions): Promise<string> {
 		path = resolve(path);
 
 		if (!await isValidFile(path)) {
@@ -163,17 +166,30 @@ export class Catbox {
 		}
 	}
 
+	public async uploadFileStream({ stream, filename }: UploadFileStreamOptions) {
+		const file = await blob(stream);
+		const data = new FormData();
+		data.set('reqtype', 'fileupload');
+		data.set('fileToUpload', file, filename);
+
+		const res = await this._doRequest(data);
+		if (res.startsWith('https://files.catbox.moe/')) {
+			return res;
+		} else {
+			throw new Error(res);
+		}
+	}
+
 	/**
 	 * Deletes files from the user account
 	 * @param options Options
 	 * @returns `true` if files have been deleted successfully
 	 */
-	public async deleteFiles(options: DeleteFilesOptions): Promise<boolean> {
+	public async deleteFiles({ files }: DeleteFilesOptions): Promise<boolean> {
 		if (!this._userHash) {
 			throw new Error('A user hash is required for this operation.');
 		}
 
-		const { files } = options;
 		const data = new FormData();
 		data.set('reqtype', 'deletefiles');
 		data.set('userhash', this._userHash);
@@ -192,8 +208,7 @@ export class Catbox {
 	 * @param options Options
 	 * @returns The album URL
 	 */
-	public async createAlbum(options: CreateAlbumOptions): Promise<string> {
-		const { title, description, files } = options;
+	public async createAlbum({ title, description, files }: CreateAlbumOptions): Promise<string> {
 		const data = new FormData();
 		data.set('reqtype', 'createalbum');
 		data.set('title', title);
@@ -202,6 +217,7 @@ export class Catbox {
 		if (files && files.length) {
 			data.set('files', files.join(' '));
 		}
+
 		if (this._userHash) {
 			data.set('userhash', this._userHash);
 		}
@@ -223,12 +239,11 @@ export class Catbox {
 	 * @param options Options
 	 * @returns The album URL
 	 */
-	public async editAlbum(options: EditAlbumOptions): Promise<string> {
+	public async editAlbum({ id, title, description, files }: EditAlbumOptions): Promise<string> {
 		if (!this._userHash) {
 			throw new Error('A user hash is required for this operation.');
 		}
 
-		const { id, title, description, files } = options;
 		const data = new FormData();
 		data.set('reqtype', 'editalbum');
 		data.set('short', id);
@@ -254,12 +269,11 @@ export class Catbox {
 	 * @param options Options
 	 * @returns The album URL
 	 */
-	public async addFilesToAlbum(options: AddFilesToAlbumOptions): Promise<string> {
+	public async addFilesToAlbum({ id, files }: AddFilesToAlbumOptions): Promise<string> {
 		if (!this._userHash) {
 			throw new Error('A user hash is required for this operation.');
 		}
 
-		const { id, files } = options;
 		const data = new FormData();
 		data.set('reqtype', 'addtoalbum');
 		data.set('short', id);
@@ -280,12 +294,11 @@ export class Catbox {
 	 * @param files Files to remove from the album
 	 * @returns The album URL
 	 */
-	public async removeFilesFromAlbum(options: RemoveFilesFromAlbumOptions): Promise<string> {
+	public async removeFilesFromAlbum({ id, files }: RemoveFilesFromAlbumOptions): Promise<string> {
 		if (!this._userHash) {
 			throw new Error('A user hash is required for this operation.');
 		}
 
-		const { id, files } = options;
 		const data = new FormData();
 		data.set('reqtype', 'removefromalbum');
 		data.set('short', id);
@@ -305,12 +318,11 @@ export class Catbox {
 	 * @param id ID of the album to delete
 	 * @returns `true` if the album was deleted or if the album doesn't exist
 	 */
-	public async removeAlbum(options: DeleteAlbumOptions): Promise<boolean> {
+	public async removeAlbum({ id }: DeleteAlbumOptions): Promise<boolean> {
 		if (!this._userHash) {
 			throw new Error('A user hash is required for this operation.');
 		}
 
-		const { id } = options;
 		const data = new FormData();
 		data.set('reqtype', 'deletealbum');
 		data.set('short', id);
@@ -333,7 +345,9 @@ export class Catbox {
 			body: data
 		};
 
-		if (catboxChannels.create.hasSubscribers) catboxChannels.create.publish({ request: init });
+		if (catboxChannels.create.hasSubscribers) {
+			catboxChannels.create.publish({ request: init });
+		}
 
 		const res = await fetch(CATBOX_API_ENDPOINT, init);
 
