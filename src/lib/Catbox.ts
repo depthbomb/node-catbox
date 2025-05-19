@@ -4,6 +4,7 @@ import { blob } from 'node:stream/consumers';
 import { resolve, basename } from 'node:path';
 import { catboxChannels } from '../diagnostics';
 import { USER_AGENT, CATBOX_API_ENDPOINT } from '../constants';
+import { INVALID_FILE_PATH, USER_HASH_REQUIRED } from '../messages';
 
 type UploadURLOptions = {
 	/**
@@ -146,7 +147,7 @@ export class Catbox {
 		path = resolve(path);
 
 		if (!await isValidFile(path)) {
-			throw new Error(`Invalid file path "${path}"`);
+			throw new Error(INVALID_FILE_PATH(path));
 		}
 
 		const file = await openAsBlob(path);
@@ -187,7 +188,7 @@ export class Catbox {
 	 */
 	public async deleteFiles({ files }: DeleteFilesOptions): Promise<boolean> {
 		if (!this._userHash) {
-			throw new Error('A user hash is required for this operation.');
+			throw new Error(USER_HASH_REQUIRED());
 		}
 
 		const data = new FormData();
@@ -241,7 +242,7 @@ export class Catbox {
 	 */
 	public async editAlbum({ id, title, description, files }: EditAlbumOptions): Promise<string> {
 		if (!this._userHash) {
-			throw new Error('A user hash is required for this operation.');
+			throw new Error(USER_HASH_REQUIRED());
 		}
 
 		const data = new FormData();
@@ -271,7 +272,7 @@ export class Catbox {
 	 */
 	public async addFilesToAlbum({ id, files }: AddFilesToAlbumOptions): Promise<string> {
 		if (!this._userHash) {
-			throw new Error('A user hash is required for this operation.');
+			throw new Error(USER_HASH_REQUIRED());
 		}
 
 		const data = new FormData();
@@ -295,7 +296,7 @@ export class Catbox {
 	 */
 	public async removeFilesFromAlbum({ id, files }: RemoveFilesFromAlbumOptions): Promise<string> {
 		if (!this._userHash) {
-			throw new Error('A user hash is required for this operation.');
+			throw new Error(USER_HASH_REQUIRED());
 		}
 
 		const data = new FormData();
@@ -319,7 +320,7 @@ export class Catbox {
 	 */
 	public async removeAlbum({ id }: DeleteAlbumOptions): Promise<boolean> {
 		if (!this._userHash) {
-			throw new Error('A user hash is required for this operation.');
+			throw new Error(USER_HASH_REQUIRED());
 		}
 
 		const data = new FormData();

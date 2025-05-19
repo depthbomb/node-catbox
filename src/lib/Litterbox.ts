@@ -3,6 +3,7 @@ import { isValidFile } from '../utils';
 import { resolve, basename } from 'node:path';
 import { litterboxChannels } from '../diagnostics';
 import { USER_AGENT, LITTERBOX_API_ENDPOINT } from '../constants';
+import { INVALID_FILE_PATH, INVALID_LITTERBOX_DURATION } from '../messages';
 
 type UploadOptions = {
 	/**
@@ -12,8 +13,17 @@ type UploadOptions = {
 	/**
 	 * Duration before the file is deleted, defaults to `1h`
 	 */
-	duration?: '1h' | '12h' | '24h' | '72h' | string & {};
+	duration?: typeof acceptedDurations[number] | FileLifetime;
 };
+
+const acceptedDurations = ['1h', '12h', '24h', '72h'] as const;
+
+export const enum FileLifetime {
+	OneHour = '1h',
+	TwelveHours = '12h',
+	OneDay = '24h',
+	ThreeDays = '72h',
+}
 
 export class Litterbox {
 	/**
@@ -30,13 +40,12 @@ export class Litterbox {
 		path = resolve(path);
 
 		if (!await isValidFile(path)) {
-			throw new Error(`Invalid file path "${path}"`);
+			throw new Error(INVALID_FILE_PATH(path));
 		}
 
 		if (duration) {
-			const acceptedDurations = ['1h', '12h', '24h', '72h'];
-			if (!acceptedDurations.includes(duration)) {
-				throw new Error(`Invalid duration "${duration}", accepted values are ${acceptedDurations.join(', ')}`);
+			if (!this.isDurationValid(duration)) {
+				throw new Error(INVALID_LITTERBOX_DURATION(duration, acceptedDurations as unknown as string[]));
 			}
 		} else {
 			duration = '1h';
@@ -67,5 +76,9 @@ export class Litterbox {
 		} else {
 			throw new Error(text);
 		}
+	}
+
+	private isDurationValid(duration: any): duration is typeof acceptedDurations[number] {
+		return acceptedDurations.includes(duration);
 	}
 }
