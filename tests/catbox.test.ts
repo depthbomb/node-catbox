@@ -1,8 +1,8 @@
 import { config } from 'dotenv';
 import { basename } from 'node:path';
 import { Catbox } from '../dist/index';
-import { test, assert, expect } from 'vitest';
 import { createReadStream } from 'node:fs';
+import { test, assert, expect } from 'vitest';
 
 config({ path: './.env' });
 
@@ -17,7 +17,7 @@ test('uploads from file path', async () => {
 	await expect(cb.uploadFile({ path: testFilePath })).resolves.toContain('https://files.catbox.moe/');
 });
 
-test('uploads from stream', async () => {
+test('uploads from file stream', async () => {
 	await expect(cb.uploadFileStream({ stream: createReadStream(testFilePath), filename: basename(testFilePath) })).resolves.toContain('https://files.catbox.moe/');
 });
 
