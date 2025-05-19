@@ -58,6 +58,16 @@ try {
 } catch (err) {
 	console.error(err); // -> error message from server
 }
+
+// ---
+
+// NEW in v3.4.0
+
+const stream = createReadStream('/path/to/my/file.ext');
+await catbox.uploadFileStream({
+	stream,
+	filename: 'file.ext'
+});
 ```
 
 ### User Hash
@@ -158,9 +168,37 @@ import { Litterbox } from 'node-catbox';
 
 const litterbox = new Litterbox();
 
+// DEPRECATED as of v3.4.0, use `uploadFile` instead
 await litterbox.upload({
 	path: '/path/to/my/file.ext',
 	duration: '12h' // or omit to default to 1h
+});
+
+// ---
+
+await litterbox.uploadFile({
+	path: '/path/to/my/file.ext',
+	duration: '12h' // or omit to default to 1h
+});
+
+// ---
+
+import { FileLifetime } from 'node-catbox';
+
+// Using an enum for duration
+await litterbox.uploadFile({
+	path: '/path/to/my/file.ext',
+	duration: FileLifetime.TwelveHours
+});
+
+// ---
+
+// NEW in v3.4.0
+
+const stream = createReadStream('/path/to/my/file.ext');
+await litterbox.uploadFileStream({
+	stream,
+	filename: 'file.ext'
 });
 ```
 
