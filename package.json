@@ -37,23 +37,23 @@
 	"scripts": {
 		"start": "node .",
 		"build": "tsc",
-		"dist": "tsup",
+		"dist": "tsdown",
 		"test": "yarn dist && vitest",
 		"release": "yarn dist && release-it",
 		"lint": "eslint ./src --ext .ts"
 	},
 	"devDependencies": {
 		"@types/eslint": "^9.6.1",
-		"@types/node": "^22.18.1",
-		"@typescript-eslint/eslint-plugin": "^8.42.0",
-		"@typescript-eslint/parser": "^8.42.0",
-		"dotenv": "^17.2.2",
-		"eslint": "^9.34.0",
-		"release-it": "^19.0.4",
+		"@types/node": "^22.18.13",
+		"@typescript-eslint/eslint-plugin": "^8.46.2",
+		"@typescript-eslint/parser": "^8.46.2",
+		"dotenv": "^17.2.3",
+		"eslint": "^9.38.0",
+		"release-it": "^19.0.5",
 		"terser": "^5.44.0",
-		"tsup": "^8.5.0",
-		"typescript": "^5.9.2",
-		"vitest": "^3.2.4"
+		"tsdown": "^0.15.12",
+		"typescript": "^5.9.3",
+		"vitest": "^4.0.6"
 	},
-	"packageManager": "yarn@4.9.4"
+	"packageManager": "yarn@4.10.3"
 }
