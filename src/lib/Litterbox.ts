@@ -1,9 +1,17 @@
 import { openAsBlob } from 'node:fs';
+import EventEmitter from 'node:events';
 import { isValidFile } from '../utils';
 import { blob } from 'node:stream/consumers';
 import { resolve, basename } from 'node:path';
-import { litterboxChannels } from '../diagnostics';
 import { USER_AGENT, LITTERBOX_API_ENDPOINT } from '../constants';
+
+type LitterboxEvents = {
+	uploadingFile:   [filepath: string, duration: typeof acceptedDurations[number] | FileLifetime];
+	uploadingStream: [filename: string, duration: typeof acceptedDurations[number] | FileLifetime];
+
+	request:  [requestInit: RequestInit];
+	response: [response: Response];
+};
 
 type UploadFileOptions = {
 	/**
@@ -34,7 +42,7 @@ export const enum FileLifetime {
 	ThreeDays   = '72h',
 }
 
-export class Litterbox {
+export class Litterbox extends EventEmitter<LitterboxEvents> {
 	/**
 	 * Uploads a file temporarily to Litterbox
 	 * @param options Options
@@ -55,6 +63,8 @@ export class Litterbox {
 		data.set('fileToUpload', file, basename(path));
 		data.set('time', duration);
 
+		this.emit('uploadingFile', path, duration);
+
 		const res = await this.#doRequest(data);
 		if (res.startsWith('https://litter.catbox.moe/')) {
 			return res;
@@ -71,6 +81,8 @@ export class Litterbox {
 		data.set('reqtype', 'fileupload');
 		data.set('fileToUpload', file, filename);
 		data.set('time', duration);
+
+		this.emit('uploadingStream', filename, duration);
 
 		const res = await this.#doRequest(data);
 		if (res.startsWith('https://litter.catbox.moe/')) {
@@ -95,11 +107,11 @@ export class Litterbox {
 			body: data
 		};
 
-		if (litterboxChannels.create.hasSubscribers) {
-			litterboxChannels.create.publish({ request: init });
-		}
+		this.emit('request', init);
 
 		const res = await fetch(LITTERBOX_API_ENDPOINT, init);
+
+		this.emit('response', res);
 
 		return res.text();
 	}

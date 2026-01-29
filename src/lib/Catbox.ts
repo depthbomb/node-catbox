@@ -1,9 +1,25 @@
 import { openAsBlob } from 'node:fs';
+import EventEmitter from 'node:events';
 import { isValidFile } from '../utils';
 import { blob } from 'node:stream/consumers';
 import { resolve, basename } from 'node:path';
-import { catboxChannels } from '../diagnostics';
 import { USER_AGENT, CATBOX_API_ENDPOINT } from '../constants';
+
+type CatboxEvents = {
+	uploadingURL:    [url: string];
+	uploadingFile:   [filepath: string];
+	uploadingStream: [filename: string];
+
+	deletingFiles:          [files: string[]];
+	creatingAlbum:          [title: string, description: string, files?: string[]];
+	editingAlbum:           [id: string, title: string, description: string, files?: string[]];
+	addingFilesToAlbum:     [id: string, files: string[]];
+	removingFilesFromAlbum: [id: string, files: string[]];
+	removingAlbum:          [id: string];
+
+	request:  [requestInit: RequestInit];
+	response: [response: Response];
+};
 
 type UploadURLOptions = {
 	/**
@@ -82,7 +98,7 @@ type DeleteAlbumOptions = {
 	id: string;
 };
 
-export class Catbox {
+export class Catbox extends EventEmitter<CatboxEvents> {
 	#userHash?: string;
 
 	/**
@@ -90,6 +106,7 @@ export class Catbox {
 	 * @param userHash Optional user hash
 	 */
 	public constructor(userHash?: string) {
+		super();
 		if (userHash) {
 			this.setUserHash(userHash);
 		}
@@ -127,6 +144,8 @@ export class Catbox {
 			data.set('userhash', this.#userHash);
 		}
 
+		this.emit('uploadingURL', url);
+
 		const res = await this.#doRequest(data);
 		if (res.startsWith('https://files.catbox.moe/')) {
 			return res;
@@ -158,6 +177,8 @@ export class Catbox {
 			data.set('userhash', this.#userHash);
 		}
 
+		this.emit('uploadingFile', path);
+
 		const res = await this.#doRequest(data);
 		if (res.startsWith('https://files.catbox.moe/')) {
 			return res;
@@ -171,6 +192,8 @@ export class Catbox {
 		const data = new FormData();
 		data.set('reqtype', 'fileupload');
 		data.set('fileToUpload', file, filename);
+
+		this.emit('uploadingStream', filename);
 
 		const res = await this.#doRequest(data);
 		if (res.startsWith('https://files.catbox.moe/')) {
@@ -190,6 +213,8 @@ export class Catbox {
 		data.set('reqtype', 'deletefiles');
 		data.set('userhash', this.#getUserHashOrThrow());
 		data.set('files', files.join(' '));
+
+		this.emit('deletingFiles', files);
 
 		const res = await this.#doRequest(data);
 		if (res.includes('successfully')) {
@@ -217,6 +242,8 @@ export class Catbox {
 		if (this.#userHash) {
 			data.set('userhash', this.#userHash);
 		}
+
+		this.emit('creatingAlbum', title, description, files);
 
 		const res = await this.#doRequest(data);
 		if (res.startsWith('https://catbox.moe/c/')) {
@@ -248,6 +275,8 @@ export class Catbox {
 
 		data.set('userhash', this.#getUserHashOrThrow());
 
+		this.emit('editingAlbum', id, title, description, files);
+
 		const res = await this.#doRequest(data);
 		if (res === `https://catbox.moe/c/${id}`) {
 			return res;
@@ -267,6 +296,8 @@ export class Catbox {
 		data.set('short', id);
 		data.set('files', files.join(' '));
 		data.set('userhash', this.#getUserHashOrThrow());
+
+		this.emit('addingFilesToAlbum', id, files);
 
 		const res = await this.#doRequest(data);
 		if (res === `https://catbox.moe/c/${id}`) {
@@ -288,6 +319,8 @@ export class Catbox {
 		data.set('files', files.join(' '));
 		data.set('userhash', this.#getUserHashOrThrow());
 
+		this.emit('removingFilesFromAlbum', id, files);
+
 		const res = await this.#doRequest(data);
 		if (res === `https://catbox.moe/c/${id}`) {
 			return res;
@@ -307,6 +340,8 @@ export class Catbox {
 		data.set('short', id);
 		data.set('userhash', this.#getUserHashOrThrow());
 
+		this.emit('removingAlbum', id);
+
 		const res = await this.#doRequest(data);
 		if (res.length === 0) {
 			return true;
@@ -324,11 +359,11 @@ export class Catbox {
 			body: data
 		};
 
-		if (catboxChannels.create.hasSubscribers) {
-			catboxChannels.create.publish({ request: init });
-		}
+		this.emit('request', init);
 
 		const res = await fetch(CATBOX_API_ENDPOINT, init);
+
+		this.emit('response', res);
 
 		return res.text();
 	}

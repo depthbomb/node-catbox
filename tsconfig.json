@@ -5,7 +5,6 @@
 		// Type Checking
 		"allowUnreachableCode": false,
 		"allowUnusedLabels": false,
-		// "exactOptionalPropertyTypes": true,
 		"noFallthroughCasesInSwitch": true,
 		"noImplicitOverride": true,
 		"noImplicitReturns": true,
@@ -15,8 +14,8 @@
 		"useUnknownInCatchVariables": true,
 
 		// Modules
-		"module": "commonjs",
-		"moduleResolution": "node",
+		"module": "nodenext",
+		"moduleResolution": "nodenext",
 		"resolveJsonModule": true,
 
 		// Emit
