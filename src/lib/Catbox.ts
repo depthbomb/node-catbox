@@ -6,33 +6,33 @@ import { catboxChannels } from '../diagnostics';
 import { USER_AGENT, CATBOX_API_ENDPOINT } from '../constants';
 import { INVALID_FILE_PATH, USER_HASH_REQUIRED } from '../messages';
 
-type UploadURLOptions = {
+export type UploadURLOptions = {
 	/**
 	 * Direct URL of the file to upload
 	 */
 	url: string;
 };
 
-type UploadFileOptions = {
+export type UploadFileOptions = {
 	/**
 	 * Path to the file to upload
 	 */
 	path: string;
 };
 
-type UploadFileStreamOptions = {
+export type UploadFileStreamOptions = {
 	stream: ReadableStream | AsyncIterable<any>;
 	filename: string;
 };
 
-type DeleteFilesOptions = {
+export type DeleteFilesOptions = {
 	/**
 	 * Array of existing file names (including extension) to delete
 	 */
 	files: string[];
 };
 
-type CreateAlbumOptions = {
+export type CreateAlbumOptions = {
 	/**
 	 * Title of the album
 	 */
@@ -47,14 +47,14 @@ type CreateAlbumOptions = {
 	files?: string[];
 };
 
-type EditAlbumOptions = CreateAlbumOptions & {
+export type EditAlbumOptions = CreateAlbumOptions & {
 	/**
 	 * ID of the album
 	 */
 	id: string;
 };
 
-type AddFilesToAlbumOptions = {
+export type AddFilesToAlbumOptions = {
 	/**
 	 * ID of the album
 	 */
@@ -65,7 +65,7 @@ type AddFilesToAlbumOptions = {
 	files: string[];
 };
 
-type RemoveFilesFromAlbumOptions = {
+export type RemoveFilesFromAlbumOptions = {
 	/**
 	 * ID of the album
 	 */
@@ -76,7 +76,7 @@ type RemoveFilesFromAlbumOptions = {
 	files: string[];
 };
 
-type DeleteAlbumOptions = {
+export type DeleteAlbumOptions = {
 	/**
 	 * ID of the album
 	 */

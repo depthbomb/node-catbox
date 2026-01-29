@@ -6,7 +6,7 @@ import { litterboxChannels } from '../diagnostics';
 import { USER_AGENT, LITTERBOX_API_ENDPOINT } from '../constants';
 import { INVALID_FILE_PATH, INVALID_LITTERBOX_DURATION } from '../messages';
 
-type UploadFileOptions = {
+export type UploadFileOptions = {
 	/**
 	 * Path to the file to upload
 	 */
@@ -17,7 +17,7 @@ type UploadFileOptions = {
 	duration?: typeof acceptedDurations[number] | FileLifetime;
 };
 
-type UploadFileStreamOptions = {
+export type UploadFileStreamOptions = {
 	stream: ReadableStream | AsyncIterable<any>;
 	filename: string;
 	/**
@@ -26,7 +26,7 @@ type UploadFileStreamOptions = {
 	duration?: typeof acceptedDurations[number] | FileLifetime;
 };
 
-const acceptedDurations = ['1h', '12h', '24h', '72h'] as const;
+export const acceptedDurations = ['1h', '12h', '24h', '72h'] as const;
 
 export const enum FileLifetime {
 	OneHour     = '1h',
