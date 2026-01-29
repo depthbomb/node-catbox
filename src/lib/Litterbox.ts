@@ -4,9 +4,8 @@ import { blob } from 'node:stream/consumers';
 import { resolve, basename } from 'node:path';
 import { litterboxChannels } from '../diagnostics';
 import { USER_AGENT, LITTERBOX_API_ENDPOINT } from '../constants';
-import { INVALID_FILE_PATH, INVALID_LITTERBOX_DURATION } from '../messages';
 
-export type UploadFileOptions = {
+type UploadFileOptions = {
 	/**
 	 * Path to the file to upload
 	 */
@@ -17,7 +16,7 @@ export type UploadFileOptions = {
 	duration?: typeof acceptedDurations[number] | FileLifetime;
 };
 
-export type UploadFileStreamOptions = {
+type UploadFileStreamOptions = {
 	stream: ReadableStream | AsyncIterable<any>;
 	filename: string;
 	/**
@@ -37,25 +36,18 @@ export const enum FileLifetime {
 
 export class Litterbox {
 	/**
-	 * Creates a new {@link Litterbox} instance
-	 */
-	public constructor() {}
-
-	/**
 	 * Uploads a file temporarily to Litterbox
 	 * @param options Options
 	 * @returns The uploaded file URL
 	 */
-	public async uploadFile({ path, duration = FileLifetime.OneHour }: UploadFileOptions): Promise<string> {
+	public async uploadFile({ path, duration = FileLifetime.OneHour }: UploadFileOptions) {
 		path = resolve(path);
 
 		if (!await isValidFile(path)) {
-			throw new Error(INVALID_FILE_PATH(path));
+			throw new Error(`Invalid file path "${path}"`);
 		}
 
-		if (!this.isDurationValid(duration)) {
-			throw new Error(INVALID_LITTERBOX_DURATION(duration, acceptedDurations as unknown as string[]));
-		}
+		this.#assertValidDuration(duration);
 
 		const file = await openAsBlob(path);
 		const data = new FormData();
@@ -63,7 +55,7 @@ export class Litterbox {
 		data.set('fileToUpload', file, basename(path));
 		data.set('time', duration);
 
-		const res = await this._doRequest(data);
+		const res = await this.#doRequest(data);
 		if (res.startsWith('https://litter.catbox.moe/')) {
 			return res;
 		} else {
@@ -71,10 +63,8 @@ export class Litterbox {
 		}
 	}
 
-	public async uploadFileStream({ stream, filename, duration = FileLifetime.OneHour }: UploadFileStreamOptions): Promise<string> {
-		if (!this.isDurationValid(duration)) {
-			throw new Error(INVALID_LITTERBOX_DURATION(duration, acceptedDurations as unknown as string[]));
-		}
+	public async uploadFileStream({ stream, filename, duration = FileLifetime.OneHour }: UploadFileStreamOptions) {
+		this.#assertValidDuration(duration);
 
 		const file = await blob(stream);
 		const data = new FormData();
@@ -82,7 +72,7 @@ export class Litterbox {
 		data.set('fileToUpload', file, filename);
 		data.set('time', duration);
 
-		const res = await this._doRequest(data);
+		const res = await this.#doRequest(data);
 		if (res.startsWith('https://litter.catbox.moe/')) {
 			return res;
 		} else {
@@ -90,11 +80,13 @@ export class Litterbox {
 		}
 	}
 
-	private isDurationValid(duration: any): duration is typeof acceptedDurations[number] {
-		return acceptedDurations.includes(duration);
+	#assertValidDuration(duration: any): asserts duration is typeof acceptedDurations[number] {
+		if (!acceptedDurations.includes(duration)) {
+			throw new Error(`Invalid duration "${duration}", accepted values are ${acceptedDurations.join(', ')}`);
+		}
 	}
 
-	private async _doRequest(data: FormData): Promise<string> {
+	async #doRequest(data: FormData) {
 		const init: RequestInit = {
 			method: 'POST',
 			headers: {
