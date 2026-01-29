@@ -5,7 +5,7 @@
 	"description": "A library for interacting with Catbox.moe written in TypeScript.",
 	"license": "MIT",
 	"engines": {
-		"node": ">=19"
+		"node": ">=22"
 	},
 	"keywords": [
 		"catbox.moe",
@@ -14,12 +14,14 @@
 		"fetch",
 		"api"
 	],
-	"main": "./dist/index.js",
+	"main": "./dist/index.cjs",
 	"module": "./dist/index.mjs",
-	"types": "./dist/index.d.ts",
+	"types": "./dist/index.d.cts",
 	"exports": {
-		"import": "./dist/index.mjs",
-		"require": "./dist/index.js"
+		".": {
+			"require": "./dist/index.cjs",
+			"import": "./dist/index.mjs"
+		}
 	},
 	"publishConfig": {
 		"access": "public"
@@ -44,7 +46,7 @@
 	},
 	"devDependencies": {
 		"@types/eslint": "^9.6.1",
-		"@types/node": "^22.19.7",
+		"@types/node": "^24.10.9",
 		"@typescript-eslint/eslint-plugin": "^8.54.0",
 		"@typescript-eslint/parser": "^8.54.0",
 		"dotenv": "^17.2.3",

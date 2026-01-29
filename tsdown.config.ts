@@ -1,15 +1,17 @@
 import { defineConfig } from 'tsdown';
 
-export default defineConfig((options) => ({
+export default defineConfig({
 	clean: true,
 	entry: [
-		'src/index.ts',
+		'src/index.ts'
 	],
 	format: ['cjs', 'esm'],
 	dts: true,
 	minify: true,
 	skipNodeModulesBundle: true,
-	target: 'node19',
-	tsconfig: './tsconfig.json',
-	splitting: true,
-}));
+	target: 'node22',
+	exports: {
+		packageJson: false
+	},
+	tsconfig: './tsconfig.json'
+});
