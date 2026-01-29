@@ -166,14 +166,6 @@ import { Litterbox } from 'node-catbox';
 
 const litterbox = new Litterbox();
 
-// DEPRECATED as of v3.4.0, use `uploadFile` instead
-await litterbox.upload({
-	path: '/path/to/my/file.ext',
-	duration: '12h' // or omit to default to 1h
-});
-
-// ---
-
 await litterbox.uploadFile({
 	path: '/path/to/my/file.ext',
 	duration: '12h' // or omit to default to 1h
