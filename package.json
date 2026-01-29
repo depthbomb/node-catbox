@@ -1,6 +1,6 @@
 {
 	"name": "node-catbox",
-	"version": "3.4.0",
+	"version": "4.0.0",
 	"author": "depthbomb",
 	"description": "A library for interacting with Catbox.moe written in TypeScript.",
 	"license": "MIT",
