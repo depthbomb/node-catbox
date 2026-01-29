@@ -24,16 +24,14 @@ This library aims to be a sort of successor to [https://www.npmjs.com/package/ca
 
 # Requirements
 
-- \>= Node.js 19
+- \>= Node.js 22
 
 # Installation
 
 ```sh
 npm i node-catbox
-
-# or
-
 yarn add node-catbox
+bun add node-catbox
 ```
 
 # Usage
