@@ -6,11 +6,6 @@ import { litterboxChannels } from '../diagnostics';
 import { USER_AGENT, LITTERBOX_API_ENDPOINT } from '../constants';
 import { INVALID_FILE_PATH, INVALID_LITTERBOX_DURATION } from '../messages';
 
-/**
- * @deprecated Use `UploadFileOptions` instead.
- */
-type UploadOptions = UploadFileOptions;
-
 type UploadFileOptions = {
 	/**
 	 * Path to the file to upload
@@ -34,10 +29,10 @@ type UploadFileStreamOptions = {
 const acceptedDurations = ['1h', '12h', '24h', '72h'] as const;
 
 export const enum FileLifetime {
-	OneHour = '1h',
+	OneHour     = '1h',
 	TwelveHours = '12h',
-	OneDay = '24h',
-	ThreeDays = '72h',
+	OneDay      = '24h',
+	ThreeDays   = '72h',
 }
 
 export class Litterbox {
@@ -45,17 +40,6 @@ export class Litterbox {
 	 * Creates a new {@link Litterbox} instance
 	 */
 	public constructor() {}
-
-	/**
-	 * @deprecated Use `uploadFile` instead.
-	 *
-	 * Uploads a file temporarily to Litterbox
-	 * @param options Options
-	 * @returns The uploaded file URL
-	 */
-	public async upload({ path, duration }: UploadOptions): Promise<string> {
-		return this.uploadFile({ path, duration });
-	}
 
 	/**
 	 * Uploads a file temporarily to Litterbox
