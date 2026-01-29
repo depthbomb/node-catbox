@@ -1,7 +1,7 @@
 import { basename } from 'node:path';
 import { test, expect } from 'vitest';
 import { createReadStream } from 'node:fs';
-import { Litterbox, FileLifetime } from '../dist/index';
+import { Litterbox, FileLifetime } from '../dist/index.mjs';
 
 const lb = new Litterbox();
 const testFilePath = './tests/file.png';
@@ -34,5 +34,6 @@ test('uploads with defined enum duration', async () => {
 });
 
 test('throws on invalid duration', async () => {
+	// @ts-expect-error
 	await expect(lb.uploadFile({ path: testFilePath, duration: '36h' })).rejects.toThrowError(/Invalid duration /);
 });
