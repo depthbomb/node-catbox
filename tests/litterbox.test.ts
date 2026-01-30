@@ -1,7 +1,7 @@
 import { basename } from 'node:path';
 import { test, expect } from 'vitest';
 import { createReadStream } from 'node:fs';
-import { Litterbox, FileLifetime } from '../dist/index.mjs';
+import { Litterbox, FileLifetime, FileNameLength } from '../dist/index.mjs';
 
 const lb = new Litterbox();
 const testFilePath = './tests/file.png';
@@ -31,6 +31,11 @@ test('uploads with defined enum duration', async () => {
 	await expect(lb.uploadFile({ path: testFilePath, duration: FileLifetime.TwelveHours })).resolves.toContain('https://litter.catbox.moe/');
 	await expect(lb.uploadFile({ path: testFilePath, duration: FileLifetime.OneDay })).resolves.toContain('https://litter.catbox.moe/');
 	await expect(lb.uploadFile({ path: testFilePath, duration: FileLifetime.ThreeDays })).resolves.toContain('https://litter.catbox.moe/');
+});
+
+test('uploads with defined enum file name length', async () => {
+	await expect(lb.uploadFile({ path: testFilePath, fileNameLength: FileNameLength.Six })).resolves.toHaveLength(36);
+	await expect(lb.uploadFile({ path: testFilePath, fileNameLength: FileNameLength.Sixteen })).resolves.toHaveLength(46);
 });
 
 test('throws on invalid duration', async () => {

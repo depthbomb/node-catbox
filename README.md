@@ -190,6 +190,18 @@ await litterbox.uploadFileStream({
 	stream,
 	filename: 'file.ext'
 });
+
+// ---
+
+// NEW in v4.1.0
+
+import { FileNameLength } from 'node-catbox';
+
+// Using an enum for duration
+await litterbox.uploadFile({
+	path: '/path/to/my/file.ext',
+	fileNameLength: FileNameLength.Sixteen
+});
 ```
 
 # Events

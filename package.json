@@ -37,8 +37,6 @@
 		"dist"
 	],
 	"scripts": {
-		"start": "node .",
-		"build": "tsc",
 		"dist": "tsdown",
 		"test": "yarn dist && vitest",
 		"release": "yarn dist && release-it",

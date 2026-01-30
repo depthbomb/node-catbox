@@ -15,22 +15,30 @@ type LitterboxEvents = {
 
 type UploadFileOptions = {
 	/**
-	 * Path to the file to upload
+	 * Path to the file to upload.
 	 */
 	path: string;
 	/**
-	 * Duration before the file is deleted, defaults to `1h`
+	 * Duration before the file is deleted, defaults to `1h`.
 	 */
 	duration?: typeof acceptedDurations[number] | FileLifetime;
+	/**
+	 * The length of the randomized file name.
+	 */
+	fileNameLength?: FileNameLength;
 };
 
 type UploadFileStreamOptions = {
 	stream: ReadableStream | AsyncIterable<any>;
 	filename: string;
 	/**
-	 * Duration before the file is deleted, defaults to `1h`
+	 * Duration before the file is deleted, defaults to `1h`.
 	 */
 	duration?: typeof acceptedDurations[number] | FileLifetime;
+	/**
+	 * The length of the randomized file name.
+	 */
+	fileNameLength?: FileNameLength;
 };
 
 export const acceptedDurations = ['1h', '12h', '24h', '72h'] as const;
@@ -42,13 +50,18 @@ export const enum FileLifetime {
 	ThreeDays   = '72h',
 }
 
+export const enum FileNameLength {
+	Six = 6,
+	Sixteen = 16
+}
+
 export class Litterbox extends EventEmitter<LitterboxEvents> {
 	/**
 	 * Uploads a file temporarily to Litterbox
 	 * @param options Options
 	 * @returns The uploaded file URL
 	 */
-	public async uploadFile({ path, duration = FileLifetime.OneHour }: UploadFileOptions) {
+	public async uploadFile({ path, duration = FileLifetime.OneHour, fileNameLength = FileNameLength.Six }: UploadFileOptions) {
 		path = resolve(path);
 
 		if (!await isValidFile(path)) {
@@ -62,6 +75,7 @@ export class Litterbox extends EventEmitter<LitterboxEvents> {
 		data.set('reqtype', 'fileupload');
 		data.set('fileToUpload', file, basename(path));
 		data.set('time', duration);
+		data.set('fileNameLength', fileNameLength);
 
 		this.emit('uploadingFile', path, duration);
 
@@ -73,7 +87,7 @@ export class Litterbox extends EventEmitter<LitterboxEvents> {
 		}
 	}
 
-	public async uploadFileStream({ stream, filename, duration = FileLifetime.OneHour }: UploadFileStreamOptions) {
+	public async uploadFileStream({ stream, filename, duration = FileLifetime.OneHour, fileNameLength = FileNameLength.Six }: UploadFileStreamOptions) {
 		this.#assertValidDuration(duration);
 
 		const file = await blob(stream);
@@ -81,6 +95,7 @@ export class Litterbox extends EventEmitter<LitterboxEvents> {
 		data.set('reqtype', 'fileupload');
 		data.set('fileToUpload', file, filename);
 		data.set('time', duration);
+		data.set('fileNameLength', fileNameLength);
 
 		this.emit('uploadingStream', filename, duration);
 
