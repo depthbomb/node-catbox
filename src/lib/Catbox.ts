@@ -194,6 +194,10 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 		data.set('reqtype', 'fileupload');
 		data.set('fileToUpload', file, filename);
 
+		if (this.#userHash) {
+			data.set('userhash', this.#userHash);
+		}
+
 		this.emit('uploadingStream', filename);
 
 		const res = await this.#doRequest(data);
