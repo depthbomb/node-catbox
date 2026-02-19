@@ -3,7 +3,7 @@ import EventEmitter from 'node:events';
 import { blob } from 'node:stream/consumers';
 import { resolve, basename } from 'node:path';
 import { USER_AGENT, CATBOX_API_ENDPOINT } from '../constants';
-import { isValidFile, createResponseSnapshot } from '../utils';
+import { isValidFile, assertValidHttpUrl, createResponseSnapshot } from '../utils';
 import type { ResponseSnapshot } from '../utils';
 
 type CatboxEvents = {
@@ -137,6 +137,8 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 	 * @returns The uploaded file URL
 	 */
 	public async uploadURL({ url }: UploadURLOptions) {
+		assertValidHttpUrl(url);
+
 		const data = new FormData();
 		data.set('reqtype', 'urlupload');
 		data.set('url', url);

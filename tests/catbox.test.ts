@@ -10,6 +10,7 @@ const cb = new Catbox();
 const cb2 = new Catbox(process.env.USER_HASH!);
 const testFileUrl = 'https://files.catbox.moe/6u9s4o.png';
 const invalidFileUrl = 'www.website';
+const invalidFileProtocolUrl = 'ftp://files.catbox.moe/6u9s4o.png';
 const testFilePath = './tests/file.png';
 const invalidFilePath = '../../../should/not/exist.exe';
 
@@ -30,7 +31,11 @@ test('uploads from direct file URL', async () => {
 });
 
 test('throws on invalid file URL', async () => {
-	await expect(() => cb.uploadURL({ url: invalidFileUrl })).rejects.toThrow();
+	await expect(() => cb.uploadURL({ url: invalidFileUrl })).rejects.toThrowError(/Invalid URL /);
+});
+
+test('throws on invalid file URL protocol', async () => {
+	await expect(() => cb.uploadURL({ url: invalidFileProtocolUrl })).rejects.toThrowError(/Invalid URL /);
 });
 
 test('creates an album', async () => {

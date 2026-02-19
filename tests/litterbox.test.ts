@@ -42,3 +42,8 @@ test('throws on invalid duration', async () => {
 	// @ts-expect-error
 	await expect(lb.uploadFile({ path: testFilePath, duration: '36h' })).rejects.toThrowError(/Invalid duration /);
 });
+
+test('throws on invalid file name length', async () => {
+	// @ts-expect-error
+	await expect(lb.uploadFile({ path: testFilePath, fileNameLength: 10 })).rejects.toThrowError(/Invalid file name length /);
+});

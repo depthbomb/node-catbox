@@ -1,15 +1,5 @@
 import { stat } from 'node:fs/promises';
 
-export async function isValidFile(path: string): Promise<boolean> {
-	try {
-		const stats = await stat(path);
-
-		return stats.isFile();
-	} catch {
-		return false;
-	}
-};
-
 export type ResponseSnapshot = Readonly<{
 	url: string;
 	ok: boolean;
@@ -19,6 +9,16 @@ export type ResponseSnapshot = Readonly<{
 	type: Response['type'];
 	headers: Readonly<Record<string, string>>;
 }>;
+
+export async function isValidFile(path: string): Promise<boolean> {
+	try {
+		const stats = await stat(path);
+
+		return stats.isFile();
+	} catch {
+		return false;
+	}
+};
 
 export function createResponseSnapshot(response: Response): ResponseSnapshot {
 	const headers = Object.freeze(Object.fromEntries(response.headers.entries()));
@@ -32,4 +32,15 @@ export function createResponseSnapshot(response: Response): ResponseSnapshot {
 		type: response.type,
 		headers
 	});
+}
+
+export function assertValidHttpUrl(url: string): void {
+	try {
+		const parsed = new URL(url);
+		if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+			throw new Error();
+		}
+	} catch {
+		throw new Error(`Invalid URL "${url}", expected an absolute http(s) URL`);
+	}
 }

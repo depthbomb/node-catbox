@@ -56,6 +56,8 @@ export const enum FileNameLength {
 	Sixteen = 16
 }
 
+const acceptedFileNameLengths = [FileNameLength.Six, FileNameLength.Sixteen] as const;
+
 export class Litterbox extends EventEmitter<LitterboxEvents> {
 	/**
 	 * Uploads a file temporarily to Litterbox
@@ -70,6 +72,7 @@ export class Litterbox extends EventEmitter<LitterboxEvents> {
 		}
 
 		this.#assertValidDuration(duration);
+		this.#assertValidFileNameLength(fileNameLength);
 
 		const file = await openAsBlob(path);
 		const data = new FormData();
@@ -90,6 +93,7 @@ export class Litterbox extends EventEmitter<LitterboxEvents> {
 
 	public async uploadFileStream({ stream, filename, duration = FileLifetime.OneHour, fileNameLength = FileNameLength.Six }: UploadFileStreamOptions) {
 		this.#assertValidDuration(duration);
+		this.#assertValidFileNameLength(fileNameLength);
 
 		const file = await blob(stream);
 		const data = new FormData();
@@ -111,6 +115,12 @@ export class Litterbox extends EventEmitter<LitterboxEvents> {
 	#assertValidDuration(duration: any): asserts duration is typeof acceptedDurations[number] {
 		if (!acceptedDurations.includes(duration)) {
 			throw new Error(`Invalid duration "${duration}", accepted values are ${acceptedDurations.join(', ')}`);
+		}
+	}
+
+	#assertValidFileNameLength(fileNameLength: any): asserts fileNameLength is typeof acceptedFileNameLengths[number] {
+		if (!acceptedFileNameLengths.includes(fileNameLength)) {
+			throw new Error(`Invalid file name length "${fileNameLength}", accepted values are ${acceptedFileNameLengths.join(', ')}`);
 		}
 	}
 
