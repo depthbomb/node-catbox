@@ -79,3 +79,28 @@ test('retries transient server errors', async () => {
 		vi.stubGlobal('fetch', originalFetch);
 	}
 });
+
+test('request event does not expose raw body', async () => {
+	const originalFetch = global.fetch;
+	const mockFetch = vi.fn().mockResolvedValue(new Response('https://litter.catbox.moe/safe.png', { status: 200 }));
+	let requestSnapshot: unknown;
+
+	lb.once('request', snapshot => {
+		requestSnapshot = snapshot;
+	});
+
+	vi.stubGlobal('fetch', mockFetch as typeof fetch);
+
+	try {
+		const stream = (async function* () {
+			yield new Uint8Array([1, 2, 3]);
+		})();
+
+		await expect(lb.uploadFileStream({ stream, filename: 'test.bin' })).resolves.toContain('https://litter.catbox.moe/');
+		expect(requestSnapshot).toBeTruthy();
+		expect(requestSnapshot).toMatchObject({ method: 'POST', hasBody: true });
+		expect(requestSnapshot).not.toHaveProperty('body');
+	} finally {
+		vi.stubGlobal('fetch', originalFetch);
+	}
+});

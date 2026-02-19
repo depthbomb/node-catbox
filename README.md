@@ -214,7 +214,8 @@ import { Catbox, Litterbox } from 'node-catbox';
 const catbox    = new Catbox();
 const litterbox = new Litterbox();
 
-catbox.on('request', requestInit => console.log(requestInit.method));
+// `request` is a sanitized read-only snapshot (no raw body)
+catbox.on('request', request => console.log(request.method, request.hasBody));
 // `response` is a read-only snapshot
 catbox.on('response', response => console.log(`${response.status} - ${response.statusText}`));
 

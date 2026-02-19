@@ -16,6 +16,13 @@ export type ResponseSnapshot = Readonly<{
 	headers: Readonly<Record<string, string>>;
 }>;
 
+export type RequestSnapshot = Readonly<{
+	url: string;
+	method: string;
+	headers: Readonly<Record<string, string>>;
+	hasBody: boolean;
+}>;
+
 type StreamChunk = string | ArrayBuffer | ArrayBufferView;
 
 const textEncoder = new TextEncoder();
@@ -41,6 +48,35 @@ export function createResponseSnapshot(response: Response): ResponseSnapshot {
 		redirected: response.redirected,
 		type: response.type,
 		headers
+	});
+}
+
+type RequestHeaders = Headers | Record<string, string | undefined> | Array<[string, string]>;
+
+function headersInitToRecord(headers?: RequestHeaders): Record<string, string> {
+	if (!headers) {
+		return {};
+	}
+
+	if (headers instanceof Headers) {
+		return Object.fromEntries(headers.entries());
+	}
+
+	if (Array.isArray(headers)) {
+		return Object.fromEntries(headers);
+	}
+
+	return Object.fromEntries(
+		Object.entries(headers).filter(([, value]) => value !== undefined) as Array<[string, string]>
+	);
+}
+
+export function createRequestSnapshot(url: string, init: RequestInit): RequestSnapshot {
+	return Object.freeze({
+		url,
+		method: init.method ?? 'GET',
+		headers: Object.freeze(headersInitToRecord(init.headers)),
+		hasBody: init.body !== undefined && init.body !== null
 	});
 }
 

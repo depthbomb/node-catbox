@@ -11,17 +11,18 @@ import {
 } from '../constants';
 import {
 	isValidFile,
+	createRequestSnapshot,
 	createResponseSnapshot,
 	streamToBlobWithSizeLimit,
 	assertFileSizeWithinLimit
 } from '../utils';
-import type { ResponseSnapshot } from '../utils';
+import type { RequestSnapshot, ResponseSnapshot } from '../utils';
 
 type LitterboxEvents = {
 	uploadingFile:   [filepath: string, duration: typeof acceptedDurations[number] | FileLifetime];
 	uploadingStream: [filename: string, duration: typeof acceptedDurations[number] | FileLifetime];
 
-	request:  [requestInit: RequestInit];
+	request:  [request: RequestSnapshot];
 	response: [response: ResponseSnapshot];
 };
 
@@ -162,7 +163,7 @@ export class Litterbox extends EventEmitter<LitterboxEvents> {
 					signal: controller.signal
 				};
 
-				this.emit('request', init);
+				this.emit('request', createRequestSnapshot(LITTERBOX_API_ENDPOINT, init));
 
 				const res = await fetch(LITTERBOX_API_ENDPOINT, init);
 

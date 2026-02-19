@@ -12,11 +12,12 @@ import {
 import {
 	isValidFile,
 	assertValidHttpUrl,
+	createRequestSnapshot,
 	createResponseSnapshot,
 	streamToBlobWithSizeLimit,
 	assertFileSizeWithinLimit
 } from '../utils';
-import type { ResponseSnapshot } from '../utils';
+import type { RequestSnapshot, ResponseSnapshot } from '../utils';
 
 type CatboxEvents = {
 	uploadingURL:    [url: string];
@@ -30,7 +31,7 @@ type CatboxEvents = {
 	removingFilesFromAlbum: [id: string, files: string[]];
 	removingAlbum:          [id: string];
 
-	request:  [requestInit: RequestInit];
+	request:  [request: RequestSnapshot];
 	response: [response: ResponseSnapshot];
 };
 
@@ -396,7 +397,7 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 					signal: controller.signal
 				};
 
-				this.emit('request', init);
+				this.emit('request', createRequestSnapshot(CATBOX_API_ENDPOINT, init));
 
 				const res = await fetch(CATBOX_API_ENDPOINT, init);
 

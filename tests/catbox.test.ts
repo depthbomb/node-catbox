@@ -80,3 +80,27 @@ test('retries transient server errors', async () => {
 		vi.stubGlobal('fetch', originalFetch);
 	}
 });
+
+test('request event does not expose raw body or userhash', async () => {
+	const originalFetch = global.fetch;
+	const mockFetch = vi.fn().mockResolvedValue(new Response('https://files.catbox.moe/safe.png', { status: 200 }));
+	const sensitiveUserHash = 'sensitive-userhash-value';
+	const secureCatbox = new Catbox(sensitiveUserHash);
+	let requestSnapshot: unknown;
+
+	secureCatbox.once('request', snapshot => {
+		requestSnapshot = snapshot;
+	});
+
+	vi.stubGlobal('fetch', mockFetch as typeof fetch);
+
+	try {
+		await expect(secureCatbox.uploadURL({ url: testFileUrl })).resolves.toContain('https://files.catbox.moe/');
+		expect(requestSnapshot).toBeTruthy();
+		expect(requestSnapshot).toMatchObject({ method: 'POST', hasBody: true });
+		expect(requestSnapshot).not.toHaveProperty('body');
+		expect(JSON.stringify(requestSnapshot)).not.toContain(sensitiveUserHash);
+	} finally {
+		vi.stubGlobal('fetch', originalFetch);
+	}
+});
