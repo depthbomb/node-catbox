@@ -22,6 +22,14 @@
 
 This library aims to be a sort of successor to [https://www.npmjs.com/package/catbox.moe](https://www.npmjs.com/package/catbox.moe).
 
+# Features
+
+- Catbox uploads by file path, direct URL, and stream
+- Litterbox uploads by file path and stream with configurable lifetime
+- Catbox album management (create, edit, add/remove files, delete)
+- Native `EventEmitter` events
+- Built-in timeout and retry handling for transient request failures
+
 # Requirements
 
 - \>= Node.js 22
@@ -45,7 +53,10 @@ const catbox = new Catbox();
 
 try {
 	const response = await catbox.uploadFile({
-		path: '/path/to/my/file.ext'
+		path: '/path/to/my/file.ext',
+		// NEW in v4.2.0 (optional)
+		// default: 200 * 1024 * 1024 (200 MB)
+		maxFileBytes: 200 * 1024 * 1024
 	});
 	// or to upload from direct file URL
 	const response = await catbox.uploadURL({
@@ -64,7 +75,10 @@ try {
 const stream = createReadStream('/path/to/my/file.ext');
 await catbox.uploadFileStream({
 	stream,
-	filename: 'file.ext'
+	filename: 'file.ext',
+	// NEW in v4.2.0 (optional)
+	// default: 200 * 1024 * 1024 (200 MB)
+	maxStreamBytes: 200 * 1024 * 1024
 });
 ```
 
@@ -168,7 +182,13 @@ const litterbox = new Litterbox();
 
 await litterbox.uploadFile({
 	path: '/path/to/my/file.ext',
-	duration: '12h' // or omit to default to 1h
+	duration: '12h', // or omit to default to 1h
+	// NEW in v4.1.0 (optional)
+	// FileNameLength.Six | FileNameLength.Sixteen
+	fileNameLength: 16,
+	// NEW in v4.2.0 (optional)
+	// default: 1024 * 1024 * 1024 (1 GB)
+	maxFileBytes: 1024 * 1024 * 1024
 });
 
 // ---
@@ -197,7 +217,7 @@ await litterbox.uploadFileStream({
 
 import { FileNameLength } from 'node-catbox';
 
-// Using an enum for duration
+// Using an enum for file name length
 await litterbox.uploadFile({
 	path: '/path/to/my/file.ext',
 	fileNameLength: FileNameLength.Sixteen
@@ -206,7 +226,7 @@ await litterbox.uploadFile({
 
 # Events
 
-As of 4.0.0, both `Catbox` and `Litterbox` emit a `request` and `response` event as well as events specific to each class:
+As of `v4.0.0`, both `Catbox` and `Litterbox` emit a `request` and `response` event as well as events specific to each class:
 
 ```ts
 import { Catbox, Litterbox } from 'node-catbox';
@@ -222,14 +242,33 @@ catbox.on('response', response => console.log(`${response.status} - ${response.s
 litterbox.on('uploadingFile', (filepath, duration) => console.log('Uploading file', filepath, 'with a duration of', duration));
 ```
 
-# Testing
+As of `v4.2.0`, `request` snapshots are explicitly sanitized and do not expose raw request body data (including any `userhash` values).
 
-Before you test the library you need to provide your Catbox account's user hash. Create a `.env` file in the project root and set the `USER_HASH` value to your account's user hash.
+Catbox-specific events:
+
+- `uploadingURL`
+- `uploadingFile`
+- `uploadingStream`
+- `deletingFiles`
+- `creatingAlbum`
+- `editingAlbum`
+- `addingFilesToAlbum`
+- `removingFilesFromAlbum`
+- `removingAlbum`
+
+Litterbox-specific events:
+
+- `uploadingFile`
+- `uploadingStream`
+
+# Testing
 
 By default, network-dependent integration tests are skipped to avoid flaky failures and rate limits.
 
-- Run default deterministic test suite: `yarn test`
-- Run full suite including live integration tests with `RUN_INTEGRATION_TESTS=1`
+- Run default deterministic test suite (no Catbox account required): `yarn test`
+- Run full suite including live integration tests:
+  - Create a `.env` file in the project root with `USER_HASH=<your_catbox_user_hash>`
+  - Run with `RUN_INTEGRATION_TESTS=1`
 
 ---
 
