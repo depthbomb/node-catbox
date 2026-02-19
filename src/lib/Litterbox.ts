@@ -1,16 +1,17 @@
 import { openAsBlob } from 'node:fs';
 import EventEmitter from 'node:events';
-import { isValidFile } from '../utils';
 import { blob } from 'node:stream/consumers';
 import { resolve, basename } from 'node:path';
+import { isValidFile, createResponseSnapshot } from '../utils';
 import { USER_AGENT, LITTERBOX_API_ENDPOINT } from '../constants';
+import type { ResponseSnapshot } from '../utils';
 
 type LitterboxEvents = {
 	uploadingFile:   [filepath: string, duration: typeof acceptedDurations[number] | FileLifetime];
 	uploadingStream: [filename: string, duration: typeof acceptedDurations[number] | FileLifetime];
 
 	request:  [requestInit: RequestInit];
-	response: [response: Response];
+	response: [response: ResponseSnapshot];
 };
 
 type UploadFileOptions = {
@@ -126,7 +127,7 @@ export class Litterbox extends EventEmitter<LitterboxEvents> {
 
 		const res = await fetch(LITTERBOX_API_ENDPOINT, init);
 
-		this.emit('response', res);
+		this.emit('response', createResponseSnapshot(res));
 
 		return res.text();
 	}

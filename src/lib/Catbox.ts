@@ -1,9 +1,10 @@
 import { openAsBlob } from 'node:fs';
-import { isValidFile } from '../utils';
 import EventEmitter from 'node:events';
 import { blob } from 'node:stream/consumers';
 import { resolve, basename } from 'node:path';
 import { USER_AGENT, CATBOX_API_ENDPOINT } from '../constants';
+import { isValidFile, createResponseSnapshot } from '../utils';
+import type { ResponseSnapshot } from '../utils';
 
 type CatboxEvents = {
 	uploadingURL:    [url: string];
@@ -18,7 +19,7 @@ type CatboxEvents = {
 	removingAlbum:          [id: string];
 
 	request:  [requestInit: RequestInit];
-	response: [response: Response];
+	response: [response: ResponseSnapshot];
 };
 
 type UploadURLOptions = {
@@ -363,7 +364,7 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 
 		const res = await fetch(CATBOX_API_ENDPOINT, init);
 
-		this.emit('response', res);
+		this.emit('response', createResponseSnapshot(res));
 
 		return res.text();
 	}
