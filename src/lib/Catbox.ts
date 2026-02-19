@@ -199,22 +199,26 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 	}
 
 	public async uploadFileStream({ stream, filename, maxStreamBytes = CATBOX_MAX_FILE_BYTES }: UploadFileStreamOptions) {
-		const file = await streamToBlobWithSizeLimit(stream, maxStreamBytes);
-		const data = new FormData();
-		data.set('reqtype', 'fileupload');
-		data.set('fileToUpload', file, filename);
+		const { blob: file, cleanup } = await streamToBlobWithSizeLimit(stream, maxStreamBytes);
+		try {
+			const data = new FormData();
+			data.set('reqtype', 'fileupload');
+			data.set('fileToUpload', file, filename);
 
-		if (this.#userHash) {
-			data.set('userhash', this.#userHash);
-		}
+			if (this.#userHash) {
+				data.set('userhash', this.#userHash);
+			}
 
-		this.emit('uploadingStream', filename);
+			this.emit('uploadingStream', filename);
 
-		const res = await this.#doRequest(data);
-		if (res.startsWith('https://files.catbox.moe/')) {
-			return res;
-		} else {
-			throw new Error(res);
+			const res = await this.#doRequest(data);
+			if (res.startsWith('https://files.catbox.moe/')) {
+				return res;
+			} else {
+				throw new Error(res);
+			}
+		} finally {
+			await cleanup();
 		}
 	}
 

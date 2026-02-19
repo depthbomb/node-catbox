@@ -1,4 +1,10 @@
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { once } from 'node:events';
 import { stat } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+import { rm, mkdtemp } from 'node:fs/promises';
+import { openAsBlob, createWriteStream } from 'node:fs';
 
 export type ResponseSnapshot = Readonly<{
 	url: string;
@@ -13,8 +19,6 @@ export type ResponseSnapshot = Readonly<{
 type StreamChunk = string | ArrayBuffer | ArrayBufferView;
 
 const textEncoder = new TextEncoder();
-
-export const DEFAULT_MAX_STREAM_BYTES = 100 * 1024 * 1024;
 
 export async function isValidFile(path: string): Promise<boolean> {
 	try {
@@ -76,33 +80,51 @@ function toUint8Array(chunk: StreamChunk): Uint8Array {
 
 export async function streamToBlobWithSizeLimit(
 	stream: ReadableStream | AsyncIterable<unknown>,
-	maxBytes: number = DEFAULT_MAX_STREAM_BYTES
-): Promise<Blob> {
+	maxBytes: number
+): Promise<{ blob: Blob; cleanup: () => Promise<void> }> {
 	if (!Number.isInteger(maxBytes) || maxBytes <= 0) {
 		throw new Error(`Invalid max stream size "${maxBytes}", expected a positive integer`);
 	}
 
+	const tempDirPath = await mkdtemp(join(tmpdir(), 'node-catbox-'));
+	const tempFilePath = join(tempDirPath, `${randomUUID()}.upload`);
+	const streamWriter = createWriteStream(tempFilePath, { flags: 'wx' });
+
+	const cleanup = async () => {
+		await rm(tempDirPath, { recursive: true, force: true });
+	};
+
 	let totalBytes = 0;
-	const chunks: Uint8Array[] = [];
+	try {
+		for await (const rawChunk of stream as AsyncIterable<unknown>) {
+			if (
+				typeof rawChunk !== 'string'
+				&& !(rawChunk instanceof ArrayBuffer)
+				&& !ArrayBuffer.isView(rawChunk)
+			) {
+				throw new Error('Invalid stream chunk type, expected string, ArrayBuffer, or ArrayBufferView');
+			}
 
-	for await (const rawChunk of stream as AsyncIterable<unknown>) {
-		if (
-			typeof rawChunk !== 'string'
-			&& !(rawChunk instanceof ArrayBuffer)
-			&& !ArrayBuffer.isView(rawChunk)
-		) {
-			throw new Error('Invalid stream chunk type, expected string, ArrayBuffer, or ArrayBufferView');
+			const chunk = toUint8Array(rawChunk);
+			totalBytes += chunk.byteLength;
+
+			if (totalBytes > maxBytes) {
+				throw new Error(`Stream exceeds maximum size of ${maxBytes} bytes`);
+			}
+
+			if (!streamWriter.write(chunk)) {
+				await once(streamWriter, 'drain');
+			}
 		}
 
-		const chunk = toUint8Array(rawChunk);
-		totalBytes += chunk.byteLength;
+		streamWriter.end();
+		await once(streamWriter, 'close');
 
-		if (totalBytes > maxBytes) {
-			throw new Error(`Stream exceeds maximum size of ${maxBytes} bytes`);
-		}
-
-		chunks.push(chunk);
+		const blob = await openAsBlob(tempFilePath);
+		return { blob, cleanup };
+	} catch (err) {
+		streamWriter.destroy();
+		await cleanup();
+		throw err;
 	}
-
-	return new Blob(chunks);
 }

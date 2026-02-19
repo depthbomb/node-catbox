@@ -103,20 +103,24 @@ export class Litterbox extends EventEmitter<LitterboxEvents> {
 		this.#assertValidDuration(duration);
 		this.#assertValidFileNameLength(fileNameLength);
 
-		const file = await streamToBlobWithSizeLimit(stream, maxStreamBytes);
-		const data = new FormData();
-		data.set('reqtype', 'fileupload');
-		data.set('fileToUpload', file, filename);
-		data.set('time', duration);
-		data.set('fileNameLength', fileNameLength);
+		const { blob: file, cleanup } = await streamToBlobWithSizeLimit(stream, maxStreamBytes);
+		try {
+			const data = new FormData();
+			data.set('reqtype', 'fileupload');
+			data.set('fileToUpload', file, filename);
+			data.set('time', duration);
+			data.set('fileNameLength', fileNameLength);
 
-		this.emit('uploadingStream', filename, duration);
+			this.emit('uploadingStream', filename, duration);
 
-		const res = await this.#doRequest(data);
-		if (res.startsWith('https://litter.catbox.moe/')) {
-			return res;
-		} else {
-			throw new Error(res);
+			const res = await this.#doRequest(data);
+			if (res.startsWith('https://litter.catbox.moe/')) {
+				return res;
+			} else {
+				throw new Error(res);
+			}
+		} finally {
+			await cleanup();
 		}
 	}
 
