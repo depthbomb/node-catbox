@@ -6,6 +6,7 @@ import { test, assert, expect, vi } from 'vitest';
 
 config({ path: './.env' });
 
+const runIntegrationTests = process.env.RUN_INTEGRATION_TESTS === '1';
 const cb = new Catbox();
 const cb2 = new Catbox(process.env.USER_HASH!);
 const testFileUrl = 'https://files.catbox.moe/6u9s4o.png';
@@ -14,11 +15,11 @@ const invalidFileProtocolUrl = 'ftp://files.catbox.moe/6u9s4o.png';
 const testFilePath = './tests/file.png';
 const invalidFilePath = '../../../should/not/exist.exe';
 
-test('uploads from file path', async () => {
+test.runIf(runIntegrationTests)('uploads from file path', async () => {
 	await expect(cb.uploadFile({ path: testFilePath })).resolves.toContain('https://files.catbox.moe/');
 });
 
-test('uploads from file stream', async () => {
+test.runIf(runIntegrationTests)('uploads from file stream', async () => {
 	await expect(cb.uploadFileStream({ stream: createReadStream(testFilePath), filename: basename(testFilePath) })).resolves.toContain('https://files.catbox.moe/');
 });
 
@@ -38,7 +39,7 @@ test('throws when file exceeds max size', async () => {
 	await expect(() => cb.uploadFile({ path: testFilePath, maxFileBytes: 1 })).rejects.toThrowError(/File exceeds maximum size /);
 });
 
-test('uploads from direct file URL', async () => {
+test.runIf(runIntegrationTests)('uploads from direct file URL', async () => {
 	await expect(cb.uploadURL({ url: testFileUrl })).resolves.toContain('https://files.catbox.moe/');
 });
 
@@ -50,7 +51,7 @@ test('throws on invalid file URL protocol', async () => {
 	await expect(() => cb.uploadURL({ url: invalidFileProtocolUrl })).rejects.toThrowError(/Invalid URL /);
 });
 
-test('creates an album', async () => {
+test.runIf(runIntegrationTests)('creates an album', async () => {
 	const uploadedFileUrl = await cb2.uploadFile({ path: testFilePath });
 	const uploadedFileName = basename(uploadedFileUrl);
 

@@ -226,6 +226,11 @@ litterbox.on('uploadingFile', (filepath, duration) => console.log('Uploading fil
 
 Before you test the library you need to provide your Catbox account's user hash. Create a `.env` file in the project root and set the `USER_HASH` value to your account's user hash.
 
+By default, network-dependent integration tests are skipped to avoid flaky failures and rate limits.
+
+- Run default deterministic test suite: `yarn test`
+- Run full suite including live integration tests with `RUN_INTEGRATION_TESTS=1`
+
 ---
 
 ## Use of AI Tools
