@@ -3,3 +3,6 @@ export const CATBOX_API_ENDPOINT      = 'https://catbox.moe/user/api.php' as con
 export const LITTERBOX_API_ENDPOINT   = 'https://litterbox.catbox.moe/resources/internals/api.php' as const;
 export const CATBOX_MAX_FILE_BYTES    = 200 * 1024 * 1024;
 export const LITTERBOX_MAX_FILE_BYTES = 1024 * 1024 * 1024;
+export const REQUEST_TIMEOUT_MS       = 30_000;
+export const MAX_REQUEST_RETRIES      = 2;
+export const RETRY_DELAY_MS           = 500;

@@ -1,8 +1,20 @@
 import { openAsBlob } from 'node:fs';
 import EventEmitter from 'node:events';
 import { resolve, basename } from 'node:path';
-import { USER_AGENT, LITTERBOX_API_ENDPOINT, LITTERBOX_MAX_FILE_BYTES } from '../constants';
-import { isValidFile, createResponseSnapshot, streamToBlobWithSizeLimit, assertFileSizeWithinLimit } from '../utils';
+import {
+	USER_AGENT,
+	RETRY_DELAY_MS,
+	REQUEST_TIMEOUT_MS,
+	MAX_REQUEST_RETRIES,
+	LITTERBOX_API_ENDPOINT,
+	LITTERBOX_MAX_FILE_BYTES
+} from '../constants';
+import {
+	isValidFile,
+	createResponseSnapshot,
+	streamToBlobWithSizeLimit,
+	assertFileSizeWithinLimit
+} from '../utils';
 import type { ResponseSnapshot } from '../utils';
 
 type LitterboxEvents = {
@@ -137,20 +149,64 @@ export class Litterbox extends EventEmitter<LitterboxEvents> {
 	}
 
 	async #doRequest(data: FormData) {
-		const init: RequestInit = {
-			method: 'POST',
-			headers: {
-				'user-agent': USER_AGENT
-			},
-			body: data
-		};
+		for (let attempt = 0; attempt <= MAX_REQUEST_RETRIES; attempt++) {
+			const controller = new AbortController();
+			const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+			try {
+				const init: RequestInit = {
+					method: 'POST',
+					headers: {
+						'user-agent': USER_AGENT
+					},
+					body: data,
+					signal: controller.signal
+				};
 
-		this.emit('request', init);
+				this.emit('request', init);
 
-		const res = await fetch(LITTERBOX_API_ENDPOINT, init);
+				const res = await fetch(LITTERBOX_API_ENDPOINT, init);
 
-		this.emit('response', createResponseSnapshot(res));
+				this.emit('response', createResponseSnapshot(res));
 
-		return res.text();
+				if (this.#shouldRetryStatus(res.status) && attempt < MAX_REQUEST_RETRIES) {
+					await this.#waitForRetry(attempt);
+					continue;
+				}
+
+				return res.text();
+			} catch (err) {
+				if (this.#isAbortError(err)) {
+					if (attempt < MAX_REQUEST_RETRIES) {
+						await this.#waitForRetry(attempt);
+						continue;
+					}
+					throw new Error(`Request timed out after ${REQUEST_TIMEOUT_MS} ms`);
+				}
+
+				if (attempt < MAX_REQUEST_RETRIES) {
+					await this.#waitForRetry(attempt);
+					continue;
+				}
+
+				throw err;
+			} finally {
+				clearTimeout(timeout);
+			}
+		}
+
+		throw new Error('Request failed after retries');
+	}
+
+	#shouldRetryStatus(status: number) {
+		return status === 408 || status === 425 || status === 429 || status >= 500;
+	}
+
+	#isAbortError(err: unknown) {
+		return err instanceof DOMException && err.name === 'AbortError';
+	}
+
+	async #waitForRetry(attempt: number) {
+		const delayMs = RETRY_DELAY_MS * (2 ** attempt);
+		await new Promise(resolve => setTimeout(resolve, delayMs));
 	}
 }

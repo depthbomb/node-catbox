@@ -2,7 +2,7 @@ import { config } from 'dotenv';
 import { basename } from 'node:path';
 import { Catbox } from '../dist/index.mjs';
 import { createReadStream } from 'node:fs';
-import { test, assert, expect } from 'vitest';
+import { test, assert, expect, vi } from 'vitest';
 
 config({ path: './.env' });
 
@@ -63,4 +63,20 @@ test('creates an album', async () => {
 	});
 
 	expect(albumUrl).toContain('https://catbox.moe/c/');
+});
+
+test('retries transient server errors', async () => {
+	const originalFetch = global.fetch;
+	const mockFetch = vi.fn()
+		.mockResolvedValueOnce(new Response('temporary', { status: 503 }))
+		.mockResolvedValueOnce(new Response('https://files.catbox.moe/retried.png', { status: 200 }));
+
+	vi.stubGlobal('fetch', mockFetch as typeof fetch);
+
+	try {
+		await expect(cb.uploadURL({ url: testFileUrl })).resolves.toContain('https://files.catbox.moe/');
+		expect(mockFetch).toHaveBeenCalledTimes(2);
+	} finally {
+		vi.stubGlobal('fetch', originalFetch);
+	}
 });

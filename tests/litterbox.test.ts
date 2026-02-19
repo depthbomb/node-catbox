@@ -1,5 +1,5 @@
 import { basename } from 'node:path';
-import { test, expect } from 'vitest';
+import { test, expect, vi } from 'vitest';
 import { createReadStream } from 'node:fs';
 import { Litterbox, FileLifetime, FileNameLength } from '../dist/index.mjs';
 
@@ -58,4 +58,24 @@ test('throws on invalid duration', async () => {
 test('throws on invalid file name length', async () => {
 	// @ts-expect-error
 	await expect(lb.uploadFile({ path: testFilePath, fileNameLength: 10 })).rejects.toThrowError(/Invalid file name length /);
+});
+
+test('retries transient server errors', async () => {
+	const originalFetch = global.fetch;
+	const mockFetch = vi.fn()
+		.mockResolvedValueOnce(new Response('temporary', { status: 503 }))
+		.mockResolvedValueOnce(new Response('https://litter.catbox.moe/retried.png', { status: 200 }));
+
+	vi.stubGlobal('fetch', mockFetch as typeof fetch);
+
+	try {
+		const stream = (async function* () {
+			yield new Uint8Array([1, 2, 3]);
+		})();
+
+		await expect(lb.uploadFileStream({ stream, filename: 'test.bin' })).resolves.toContain('https://litter.catbox.moe/');
+		expect(mockFetch).toHaveBeenCalledTimes(2);
+	} finally {
+		vi.stubGlobal('fetch', originalFetch);
+	}
 });
