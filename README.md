@@ -78,7 +78,7 @@ const catbox = new Catbox('098f6bcd4621d373cade4e832');
 ```ts
 const catbox = new Catbox();
 
-const catbox.setUserHash('098f6bcd4621d373cade4e832');
+catbox.setUserHash('098f6bcd4621d373cade4e832');
 ```
 
 ### Deleting Files
@@ -154,7 +154,7 @@ import { Catbox } from 'node-catbox';
 // user hash required
 const catbox = new Catbox('098f6bcd4621d373cade4e832');
 
-await catbox.deleteAlbum({
+await catbox.removeAlbum({
 	id: 'YYYYY'
 });
 ```
