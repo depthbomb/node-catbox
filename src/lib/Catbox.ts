@@ -1,6 +1,6 @@
 import { openAsBlob } from 'node:fs';
-import EventEmitter from 'node:events';
 import { isValidFile } from '../utils';
+import EventEmitter from 'node:events';
 import { blob } from 'node:stream/consumers';
 import { resolve, basename } from 'node:path';
 import { USER_AGENT, CATBOX_API_ENDPOINT } from '../constants';

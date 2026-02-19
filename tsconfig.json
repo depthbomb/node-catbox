@@ -1,4 +1,5 @@
 {
+	"extends": "@tsconfig/node24/tsconfig.json",
 	"compilerOptions": {
 		"ignoreDeprecations": "5.0",
 
@@ -14,8 +15,6 @@
 		"useUnknownInCatchVariables": true,
 
 		// Modules
-		"module": "nodenext",
-		"moduleResolution": "nodenext",
 		"resolveJsonModule": true,
 
 		// Emit
@@ -34,15 +33,7 @@
 		// Language and Environment
 		"emitDecoratorMetadata": false,
 		"experimentalDecorators": false,
-		"lib": ["ESNext"],
-		"target": "ESNext",
 		"useDefineForClassFields": true,
-
-		// Projects
-		//"incremental": true,
-
-		// Completeness
-		"skipLibCheck": true
 	},
 	"include": ["src/**/*.ts"]
 }
