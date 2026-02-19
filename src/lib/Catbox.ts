@@ -1,9 +1,8 @@
 import { openAsBlob } from 'node:fs';
 import EventEmitter from 'node:events';
-import { blob } from 'node:stream/consumers';
 import { resolve, basename } from 'node:path';
-import { USER_AGENT, CATBOX_API_ENDPOINT } from '../constants';
-import { isValidFile, assertValidHttpUrl, createResponseSnapshot } from '../utils';
+import { USER_AGENT, CATBOX_API_ENDPOINT, CATBOX_MAX_FILE_BYTES } from '../constants';
+import { isValidFile, assertValidHttpUrl, createResponseSnapshot, streamToBlobWithSizeLimit, assertFileSizeWithinLimit } from '../utils';
 import type { ResponseSnapshot } from '../utils';
 
 type CatboxEvents = {
@@ -34,11 +33,19 @@ type UploadFileOptions = {
 	 * Path to the file to upload
 	 */
 	path: string;
+	/**
+	 * Maximum file size in bytes before throwing, defaults to 200 MB.
+	 */
+	maxFileBytes?: number;
 };
 
 type UploadFileStreamOptions = {
 	stream: ReadableStream | AsyncIterable<any>;
 	filename: string;
+	/**
+	 * Maximum stream size in bytes before throwing, defaults to 200 MB.
+	 */
+	maxStreamBytes?: number;
 };
 
 type DeleteFilesOptions = {
@@ -164,12 +171,13 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 	 * @param options Options
 	 * @returns The uploaded file URL
 	 */
-	public async uploadFile({ path }: UploadFileOptions) {
+	public async uploadFile({ path, maxFileBytes = CATBOX_MAX_FILE_BYTES }: UploadFileOptions) {
 		path = resolve(path);
 
 		if (!await isValidFile(path)) {
 			throw new Error(`Invalid file path "${path}"`);
 		}
+		await assertFileSizeWithinLimit(path, maxFileBytes);
 
 		const file = await openAsBlob(path);
 		const data = new FormData();
@@ -190,8 +198,8 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 		}
 	}
 
-	public async uploadFileStream({ stream, filename }: UploadFileStreamOptions) {
-		const file = await blob(stream);
+	public async uploadFileStream({ stream, filename, maxStreamBytes = CATBOX_MAX_FILE_BYTES }: UploadFileStreamOptions) {
+		const file = await streamToBlobWithSizeLimit(stream, maxStreamBytes);
 		const data = new FormData();
 		data.set('reqtype', 'fileupload');
 		data.set('fileToUpload', file, filename);

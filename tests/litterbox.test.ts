@@ -15,8 +15,20 @@ test('throws on invalid file path', async () => {
 	await expect(() => lb.uploadFile({ path: invalidFilePath })).rejects.toThrowError(/Invalid file path /);
 });
 
+test('throws when file exceeds max size', async () => {
+	await expect(() => lb.uploadFile({ path: testFilePath, maxFileBytes: 1 })).rejects.toThrowError(/File exceeds maximum size /);
+});
+
 test('uploads from file stream', async () => {
 	await expect(lb.uploadFileStream({ stream: createReadStream(testFilePath), filename: basename(testFilePath) })).resolves.toContain('https://litter.catbox.moe/');
+});
+
+test('throws when stream exceeds max size', async () => {
+	await expect(() => lb.uploadFileStream({
+		stream: createReadStream(testFilePath),
+		filename: basename(testFilePath),
+		maxStreamBytes: 1
+	})).rejects.toThrowError(/Stream exceeds maximum size /);
 });
 
 test('uploads with defined string duration', async () => {

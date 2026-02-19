@@ -1,9 +1,8 @@
 import { openAsBlob } from 'node:fs';
 import EventEmitter from 'node:events';
-import { blob } from 'node:stream/consumers';
 import { resolve, basename } from 'node:path';
-import { isValidFile, createResponseSnapshot } from '../utils';
-import { USER_AGENT, LITTERBOX_API_ENDPOINT } from '../constants';
+import { USER_AGENT, LITTERBOX_API_ENDPOINT, LITTERBOX_MAX_FILE_BYTES } from '../constants';
+import { isValidFile, createResponseSnapshot, streamToBlobWithSizeLimit, assertFileSizeWithinLimit } from '../utils';
 import type { ResponseSnapshot } from '../utils';
 
 type LitterboxEvents = {
@@ -27,6 +26,10 @@ type UploadFileOptions = {
 	 * The length of the randomized file name.
 	 */
 	fileNameLength?: FileNameLength;
+	/**
+	 * Maximum file size in bytes before throwing, defaults to 1 GB.
+	 */
+	maxFileBytes?: number;
 };
 
 type UploadFileStreamOptions = {
@@ -40,6 +43,10 @@ type UploadFileStreamOptions = {
 	 * The length of the randomized file name.
 	 */
 	fileNameLength?: FileNameLength;
+	/**
+	 * Maximum stream size in bytes before throwing, defaults to 1 GB.
+	 */
+	maxStreamBytes?: number;
 };
 
 export const acceptedDurations = ['1h', '12h', '24h', '72h'] as const;
@@ -64,7 +71,7 @@ export class Litterbox extends EventEmitter<LitterboxEvents> {
 	 * @param options Options
 	 * @returns The uploaded file URL
 	 */
-	public async uploadFile({ path, duration = FileLifetime.OneHour, fileNameLength = FileNameLength.Six }: UploadFileOptions) {
+	public async uploadFile({ path, duration = FileLifetime.OneHour, fileNameLength = FileNameLength.Six, maxFileBytes = LITTERBOX_MAX_FILE_BYTES }: UploadFileOptions) {
 		path = resolve(path);
 
 		if (!await isValidFile(path)) {
@@ -73,6 +80,7 @@ export class Litterbox extends EventEmitter<LitterboxEvents> {
 
 		this.#assertValidDuration(duration);
 		this.#assertValidFileNameLength(fileNameLength);
+		await assertFileSizeWithinLimit(path, maxFileBytes);
 
 		const file = await openAsBlob(path);
 		const data = new FormData();
@@ -91,11 +99,11 @@ export class Litterbox extends EventEmitter<LitterboxEvents> {
 		}
 	}
 
-	public async uploadFileStream({ stream, filename, duration = FileLifetime.OneHour, fileNameLength = FileNameLength.Six }: UploadFileStreamOptions) {
+	public async uploadFileStream({ stream, filename, duration = FileLifetime.OneHour, fileNameLength = FileNameLength.Six, maxStreamBytes = LITTERBOX_MAX_FILE_BYTES }: UploadFileStreamOptions) {
 		this.#assertValidDuration(duration);
 		this.#assertValidFileNameLength(fileNameLength);
 
-		const file = await blob(stream);
+		const file = await streamToBlobWithSizeLimit(stream, maxStreamBytes);
 		const data = new FormData();
 		data.set('reqtype', 'fileupload');
 		data.set('fileToUpload', file, filename);

@@ -22,8 +22,20 @@ test('uploads from file stream', async () => {
 	await expect(cb.uploadFileStream({ stream: createReadStream(testFilePath), filename: basename(testFilePath) })).resolves.toContain('https://files.catbox.moe/');
 });
 
+test('throws when stream exceeds max size', async () => {
+	await expect(() => cb.uploadFileStream({
+		stream: createReadStream(testFilePath),
+		filename: basename(testFilePath),
+		maxStreamBytes: 1
+	})).rejects.toThrowError(/Stream exceeds maximum size /);
+});
+
 test('throws on invalid file path', async () => {
 	await expect(() => cb.uploadFile({ path: invalidFilePath })).rejects.toThrowError(/Invalid file path /);
+});
+
+test('throws when file exceeds max size', async () => {
+	await expect(() => cb.uploadFile({ path: testFilePath, maxFileBytes: 1 })).rejects.toThrowError(/File exceeds maximum size /);
 });
 
 test('uploads from direct file URL', async () => {
