@@ -4,8 +4,10 @@
 	"author": "depthbomb",
 	"description": "A library for interacting with Catbox.moe written in TypeScript.",
 	"license": "MIT",
+	"type": "module",
+	"sideEffects": false,
 	"engines": {
-		"node": ">=22"
+		"node": ">=24"
 	},
 	"keywords": [
 		"catbox.moe",
@@ -19,6 +21,10 @@
 	"types": "./dist/index.d.cts",
 	"exports": {
 		".": {
+			"types": {
+				"import": "./dist/index.d.mts",
+				"require": "./dist/index.d.cts"
+			},
 			"import": "./dist/index.mjs",
 			"require": "./dist/index.cjs"
 		}
@@ -38,23 +44,30 @@
 	],
 	"scripts": {
 		"dist": "tsdown",
-		"test": "yarn dist && vitest",
+		"test": "yarn dist && vitest run",
+		"typecheck": "yarn dist && tsc --noEmit && tsc --project tsconfig.test.json",
 		"release": "yarn dist && release-it",
-		"lint": "eslint ./src --ext .ts"
+		"lint": "eslint src tests *.ts *.mjs",
+		"smoke": "node -e \"const p = require('node-catbox'); if (!p.Catbox || !p.Litterbox) process.exit(1)\" && node --input-type=module -e \"import { Catbox, Litterbox } from 'node-catbox'; if (!Catbox || !Litterbox) process.exit(1)\"",
+		"check": "yarn lint && yarn typecheck && vitest run && yarn smoke",
+		"prepack": "yarn dist"
 	},
 	"devDependencies": {
-		"@tsconfig/node24": "^24.0.4",
+		"@eslint/eslintrc": "^3.3.6",
+		"@eslint/js": "^10.0.1",
+		"@tsconfig/node24": "^24.0.5",
 		"@types/eslint": "^9.6.1",
-		"@types/node": "^24.12.2",
-		"@typescript-eslint/eslint-plugin": "^8.58.2",
-		"@typescript-eslint/parser": "^8.58.2",
+		"@types/node": "^24.13.3",
+		"@typescript-eslint/eslint-plugin": "^8.68.0",
+		"@typescript-eslint/parser": "^8.68.0",
+		"@typescript/native": "npm:typescript@^7.0.2",
 		"dotenv": "^17.4.2",
-		"eslint": "^10.2.1",
-		"release-it": "^20.0.0",
-		"terser": "^5.46.1",
-		"tsdown": "^0.21.9",
-		"typescript": "^6.0.3",
-		"vitest": "^4.1.4"
+		"eslint": "^10.9.1",
+		"globals": "^17.11.0",
+		"release-it": "^21.0.2",
+		"tsdown": "^0.22.14",
+		"typescript": "npm:@typescript/typescript6@^6.0.2",
+		"vitest": "^4.1.11"
 	},
-	"packageManager": "yarn@4.14.1"
+	"packageManager": "yarn@4.18.0"
 }

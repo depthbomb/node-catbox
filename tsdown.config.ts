@@ -8,10 +8,22 @@ export default defineConfig({
 	format: ['cjs', 'esm'],
 	dts: true,
 	minify: true,
-	skipNodeModulesBundle: true,
-	target: 'node22',
+	deps: {
+		neverBundle: true
+	},
+	target: 'node24',
 	exports: {
-		packageJson: false
+		packageJson: false,
+		customExports: {
+			'.': {
+				types: {
+					import: './dist/index.d.mts',
+					require: './dist/index.d.cts'
+				},
+				import: './dist/index.mjs',
+				require: './dist/index.cjs'
+			}
+		}
 	},
 	tsconfig: './tsconfig.json'
 });

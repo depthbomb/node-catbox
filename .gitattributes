@@ -1,0 +1,3 @@
+.yarnrc.yml whitespace=cr-at-eol
+yarn.lock whitespace=cr-at-eol
+.yarn/releases/*.cjs -whitespace

@@ -47,4 +47,9 @@ export default defineConfig([globalIgnores(["**/dist", "**/node_modules"]), {
 		"@typescript-eslint/no-unused-vars": "warn",
 		"@typescript-eslint/no-explicit-any": "warn"
 	},
+}, {
+	files: ["**/*.ts"],
+	rules: {
+		"no-undef": "off"
+	}
 }]);
