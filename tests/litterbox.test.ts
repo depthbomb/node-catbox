@@ -32,6 +32,24 @@ test('throws when stream exceeds max size', async () => {
 	})).rejects.toThrowError(/Stream exceeds maximum size /);
 });
 
+test('rejects invalid stream chunks without making a request', async () => {
+	const originalFetch = global.fetch;
+	const mockFetch = vi.fn();
+	const stream = (async function* () {
+		yield { invalid: true };
+	})();
+	vi.stubGlobal('fetch', mockFetch as typeof fetch);
+
+	try {
+		await expect(lb.uploadFileStream({ stream, filename: 'invalid.bin' })).rejects.toThrow(
+			/Invalid stream chunk type/
+		);
+		expect(mockFetch).not.toHaveBeenCalled();
+	} finally {
+		vi.stubGlobal('fetch', originalFetch);
+	}
+});
+
 test.runIf(runIntegrationTests)('uploads with defined string duration', async () => {
 	await expect(lb.uploadFile({ path: testFilePath, duration: '1h' })).resolves.toContain('https://litter.catbox.moe/');
 	await expect(lb.uploadFile({ path: testFilePath, duration: '12h' })).resolves.toContain('https://litter.catbox.moe/');
@@ -52,12 +70,12 @@ test.runIf(runIntegrationTests)('uploads with defined enum file name length', as
 });
 
 test('throws on invalid duration', async () => {
-	// @ts-expect-error
+	// @ts-expect-error Intentionally exercise runtime validation of JavaScript input.
 	await expect(lb.uploadFile({ path: testFilePath, duration: '36h' })).rejects.toThrowError(/Invalid duration /);
 });
 
 test('throws on invalid file name length', async () => {
-	// @ts-expect-error
+	// @ts-expect-error Intentionally exercise runtime validation of JavaScript input.
 	await expect(lb.uploadFile({ path: testFilePath, fileNameLength: 10 })).rejects.toThrowError(/Invalid file name length /);
 });
 

@@ -1,9 +1,10 @@
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { once } from 'node:events';
+import { Readable } from 'node:stream';
 import { stat } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { rm, mkdtemp } from 'node:fs/promises';
+import { pipeline } from 'node:stream/promises';
 import { openAsBlob, createWriteStream } from 'node:fs';
 
 export type ResponseSnapshot = Readonly<{
@@ -51,24 +52,12 @@ export function createResponseSnapshot(response: Response): ResponseSnapshot {
 	});
 }
 
-type RequestHeaders = Headers | Record<string, string | undefined> | Array<[string, string]>;
-
-function headersInitToRecord(headers?: RequestHeaders): Record<string, string> {
+function headersInitToRecord(headers?: NonNullable<RequestInit['headers']>): Record<string, string> {
 	if (!headers) {
 		return {};
 	}
 
-	if (headers instanceof Headers) {
-		return Object.fromEntries(headers.entries());
-	}
-
-	if (Array.isArray(headers)) {
-		return Object.fromEntries(headers);
-	}
-
-	return Object.fromEntries(
-		Object.entries(headers).filter(([, value]) => value !== undefined) as Array<[string, string]>
-	);
+	return Object.fromEntries(new Headers(headers).entries());
 }
 
 export function createRequestSnapshot(url: string, init: RequestInit): RequestSnapshot {
@@ -127,40 +116,88 @@ export async function streamToBlobWithSizeLimit(
 	const streamWriter = createWriteStream(tempFilePath, { flags: 'wx' });
 
 	const cleanup = async () => {
-		await rm(tempDirPath, { recursive: true, force: true });
+		await rm(tempDirPath, {
+			recursive: true,
+			force: true,
+			maxRetries: 3,
+			retryDelay: 100
+		});
 	};
 
 	let totalBytes = 0;
 	try {
-		for await (const rawChunk of stream as AsyncIterable<unknown>) {
-			if (
-				typeof rawChunk !== 'string'
-				&& !(rawChunk instanceof ArrayBuffer)
-				&& !ArrayBuffer.isView(rawChunk)
-			) {
-				throw new Error('Invalid stream chunk type, expected string, ArrayBuffer, or ArrayBufferView');
-			}
+		await pipeline(
+			Readable.from(stream as AsyncIterable<unknown>),
+			async function* (chunks) {
+				for await (const rawChunk of chunks) {
+					if (
+						typeof rawChunk !== 'string'
+							&& !(rawChunk instanceof ArrayBuffer)
+							&& !ArrayBuffer.isView(rawChunk)
+					) {
+						throw new Error('Invalid stream chunk type, expected string, ArrayBuffer, or ArrayBufferView');
+					}
 
-			const chunk = toUint8Array(rawChunk);
-			totalBytes += chunk.byteLength;
+					const chunk = toUint8Array(rawChunk);
+					totalBytes += chunk.byteLength;
 
-			if (totalBytes > maxBytes) {
-				throw new Error(`Stream exceeds maximum size of ${maxBytes} bytes`);
-			}
+					if (totalBytes > maxBytes) {
+						throw new Error(`Stream exceeds maximum size of ${maxBytes} bytes`);
+					}
 
-			if (!streamWriter.write(chunk)) {
-				await once(streamWriter, 'drain');
-			}
-		}
-
-		streamWriter.end();
-		await once(streamWriter, 'close');
+					yield chunk;
+				}
+			},
+			streamWriter
+		);
 
 		const blob = await openAsBlob(tempFilePath);
 		return { blob, cleanup };
-	} catch (err) {
-		streamWriter.destroy();
-		await cleanup();
-		throw err;
+	} catch (error) {
+		try {
+			await cleanup();
+		} catch (cleanupError) {
+			throw new AggregateError(
+				[error, cleanupError],
+				'Failed to stage the stream and clean up its temporary files',
+				{ cause: cleanupError }
+			);
+		}
+		throw error;
 	}
+}
+
+export async function runWithCleanup<T>(
+	operation: () => Promise<T>,
+	cleanup: () => Promise<void>
+): Promise<T> {
+	let result: T;
+	try {
+		result = await operation();
+	} catch (operationError) {
+		try {
+			await cleanup();
+		} catch (cleanupError) {
+			throw new AggregateError(
+				[operationError, cleanupError],
+				'The operation and temporary-file cleanup both failed',
+				{ cause: cleanupError }
+			);
+		}
+		throw operationError;
+	}
+
+	try {
+		await cleanup();
+	} catch (cleanupError) {
+		// The remote operation already succeeded. Warn about the local leak while
+		// preserving the result so callers are not encouraged to repeat the POST.
+		const warning = Object.assign(
+			new Error('Failed to clean up temporary upload files', { cause: cleanupError }),
+			{ code: 'NODE_CATBOX_TEMP_CLEANUP_FAILED' }
+		);
+		process.emitWarning(warning);
+	}
+
+	return result;
 }

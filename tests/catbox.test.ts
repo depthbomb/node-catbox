@@ -68,8 +68,43 @@ test.runIf(runIntegrationTests)('creates an album', async () => {
 
 test('retries transient server errors', async () => {
 	const originalFetch = global.fetch;
+	let cancelledBodies = 0;
+	let finishCancellation!: () => void;
+	const cancellation = new Promise<void>(resolve => {
+		finishCancellation = resolve;
+	});
 	const mockFetch = vi.fn()
-		.mockResolvedValueOnce(new Response('temporary', { status: 503 }))
+		.mockResolvedValueOnce(new Response(new ReadableStream({
+			cancel() {
+				cancelledBodies++;
+				return cancellation;
+			}
+		}), { status: 503 }))
+		.mockResolvedValueOnce(new Response('https://files.catbox.moe/retried.png', { status: 200 }));
+
+	vi.stubGlobal('fetch', mockFetch as typeof fetch);
+
+	try {
+		const upload = cb.uploadURL({ url: testFileUrl });
+		await new Promise(resolve => setImmediate(resolve));
+		expect(mockFetch).toHaveBeenCalledTimes(1);
+		finishCancellation();
+		await expect(upload).resolves.toContain('https://files.catbox.moe/');
+		expect(mockFetch).toHaveBeenCalledTimes(2);
+		expect(cancelledBodies).toBe(1);
+	} finally {
+		vi.stubGlobal('fetch', originalFetch);
+	}
+});
+
+test('retries even when disposing the previous response body fails', async () => {
+	const originalFetch = global.fetch;
+	const mockFetch = vi.fn()
+		.mockResolvedValueOnce(new Response(new ReadableStream({
+			cancel() {
+				throw new Error('cancel failed');
+			}
+		}), { status: 503 }))
 		.mockResolvedValueOnce(new Response('https://files.catbox.moe/retried.png', { status: 200 }));
 
 	vi.stubGlobal('fetch', mockFetch as typeof fetch);
@@ -80,6 +115,97 @@ test('retries transient server errors', async () => {
 	} finally {
 		vi.stubGlobal('fetch', originalFetch);
 	}
+});
+
+test('rejects the final retryable HTTP response even when its body looks successful', async () => {
+	vi.useFakeTimers();
+	const originalFetch = global.fetch;
+	const mockFetch = vi.fn().mockImplementation(async () =>
+		new Response('https://files.catbox.moe/not-uploaded.png', { status: 503 })
+	);
+
+	vi.stubGlobal('fetch', mockFetch as typeof fetch);
+
+	try {
+		const assertion = expect(cb.uploadURL({ url: testFileUrl })).rejects.toThrow(/HTTP 503/);
+		await vi.runAllTimersAsync();
+		await assertion;
+		expect(mockFetch).toHaveBeenCalledTimes(3);
+	} finally {
+		vi.useRealTimers();
+		vi.stubGlobal('fetch', originalFetch);
+	}
+});
+
+test('does not retry ambiguous transport failures', async () => {
+	const originalFetch = global.fetch;
+	const networkError = new TypeError('socket reset');
+	const mockFetch = vi.fn().mockRejectedValue(networkError);
+
+	vi.stubGlobal('fetch', mockFetch as typeof fetch);
+
+	try {
+		await expect(cb.createAlbum({ title: 'title', description: 'description' })).rejects.toBe(networkError);
+		expect(mockFetch).toHaveBeenCalledTimes(1);
+	} finally {
+		vi.stubGlobal('fetch', originalFetch);
+	}
+});
+
+test('does not retry a completed request when a response listener throws', async () => {
+	const originalFetch = global.fetch;
+	const listenerError = new Error('listener failed');
+	let cancelledBodies = 0;
+	const mockFetch = vi.fn().mockResolvedValue(
+		new Response(new ReadableStream({
+			cancel() {
+				cancelledBodies++;
+			}
+		}), { status: 200 })
+	);
+	const client = new Catbox();
+	client.once('response', () => {
+		throw listenerError;
+	});
+
+	vi.stubGlobal('fetch', mockFetch as typeof fetch);
+
+	try {
+		await expect(client.uploadURL({ url: testFileUrl })).rejects.toBe(listenerError);
+		expect(mockFetch).toHaveBeenCalledTimes(1);
+		expect(cancelledBodies).toBe(1);
+	} finally {
+		vi.stubGlobal('fetch', originalFetch);
+	}
+});
+
+test('applies the configured timeout while reading the response body', async () => {
+	const originalFetch = global.fetch;
+	const client = new Catbox(undefined, { requestTimeoutMs: 10 });
+	const mockFetch = vi.fn(async (_input: string | URL | Request, init?: RequestInit) => {
+		const signal = init?.signal;
+		return new Response(new ReadableStream({
+			start(controller) {
+				signal?.addEventListener('abort', () => {
+					controller.error(new DOMException('aborted', 'AbortError'));
+				}, { once: true });
+			}
+		}));
+	});
+
+	vi.stubGlobal('fetch', mockFetch as typeof fetch);
+
+	try {
+		await expect(client.uploadURL({ url: testFileUrl })).rejects.toThrow(/timed out after 10 ms/);
+		expect(mockFetch).toHaveBeenCalledTimes(1);
+	} finally {
+		vi.stubGlobal('fetch', originalFetch);
+	}
+});
+
+test('validates configured request timeouts', () => {
+	expect(() => new Catbox(undefined, { requestTimeoutMs: 0 })).toThrow(/Invalid request timeout/);
+	expect(() => new Catbox(undefined, { requestTimeoutMs: 2_147_483_648 })).toThrow(/Invalid request timeout/);
 });
 
 test('request event does not expose raw body or userhash', async () => {

@@ -2,22 +2,20 @@ import { openAsBlob } from 'node:fs';
 import EventEmitter from 'node:events';
 import { resolve, basename } from 'node:path';
 import {
-	USER_AGENT,
-	RETRY_DELAY_MS,
-	REQUEST_TIMEOUT_MS,
 	CATBOX_API_ENDPOINT,
-	MAX_REQUEST_RETRIES,
+	CATBOX_REQUEST_TIMEOUT_MS,
 	CATBOX_MAX_FILE_BYTES
 } from '../constants';
 import {
 	isValidFile,
+	runWithCleanup,
 	assertValidHttpUrl,
-	createRequestSnapshot,
-	createResponseSnapshot,
 	streamToBlobWithSizeLimit,
 	assertFileSizeWithinLimit
 } from '../utils';
+import { postForm, validateRequestTimeout } from '../request';
 import type { RequestSnapshot, ResponseSnapshot } from '../utils';
+import type { ClientOptions } from '../request';
 
 type CatboxEvents = {
 	uploadingURL:    [url: string];
@@ -54,7 +52,7 @@ type UploadFileOptions = {
 };
 
 type UploadFileStreamOptions = {
-	stream: ReadableStream | AsyncIterable<any>;
+	stream: ReadableStream<unknown> | AsyncIterable<unknown>;
 	filename: string;
 	/**
 	 * Maximum stream size in bytes before throwing, defaults to 200 MB.
@@ -122,13 +120,17 @@ type DeleteAlbumOptions = {
 
 export class Catbox extends EventEmitter<CatboxEvents> {
 	#userHash?: string;
+	readonly #requestTimeoutMs: number;
 
 	/**
 	 * Creates a new {@link Catbox} instance
 	 * @param userHash Optional user hash
+	 * @param options Client request options
 	 */
-	public constructor(userHash?: string) {
+	public constructor(userHash?: string, { requestTimeoutMs = CATBOX_REQUEST_TIMEOUT_MS }: ClientOptions = {}) {
 		super();
+		validateRequestTimeout(requestTimeoutMs);
+		this.#requestTimeoutMs = requestTimeoutMs;
 		if (userHash) {
 			this.setUserHash(userHash);
 		}
@@ -214,7 +216,7 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 
 	public async uploadFileStream({ stream, filename, maxStreamBytes = CATBOX_MAX_FILE_BYTES }: UploadFileStreamOptions) {
 		const { blob: file, cleanup } = await streamToBlobWithSizeLimit(stream, maxStreamBytes);
-		try {
+		return runWithCleanup(async () => {
 			const data = new FormData();
 			data.set('reqtype', 'fileupload');
 			data.set('fileToUpload', file, filename);
@@ -231,9 +233,7 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 			} else {
 				throw new Error(res);
 			}
-		} finally {
-			await cleanup();
-		}
+		}, cleanup);
 	}
 
 	/**
@@ -384,65 +384,13 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 	}
 
 	async #doRequest(data: FormData) {
-		for (let attempt = 0; attempt <= MAX_REQUEST_RETRIES; attempt++) {
-			const controller = new AbortController();
-			const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-			try {
-				const init: RequestInit = {
-					method: 'POST',
-					headers: {
-						'user-agent': USER_AGENT
-					},
-					body: data,
-					signal: controller.signal
-				};
-
-				this.emit('request', createRequestSnapshot(CATBOX_API_ENDPOINT, init));
-
-				const res = await fetch(CATBOX_API_ENDPOINT, init);
-
-				this.emit('response', createResponseSnapshot(res));
-
-				if (this.#shouldRetryStatus(res.status) && attempt < MAX_REQUEST_RETRIES) {
-					await this.#waitForRetry(attempt);
-					continue;
-				}
-
-				return res.text();
-			} catch (err) {
-				if (this.#isAbortError(err)) {
-					if (attempt < MAX_REQUEST_RETRIES) {
-						await this.#waitForRetry(attempt);
-						continue;
-					}
-					throw new Error(`Request timed out after ${REQUEST_TIMEOUT_MS} ms`);
-				}
-
-				if (attempt < MAX_REQUEST_RETRIES) {
-					await this.#waitForRetry(attempt);
-					continue;
-				}
-
-				throw err;
-			} finally {
-				clearTimeout(timeout);
-			}
-		}
-
-		throw new Error('Request failed after retries');
-	}
-
-	#shouldRetryStatus(status: number) {
-		return status === 408 || status === 425 || status === 429 || status >= 500;
-	}
-
-	#isAbortError(err: unknown) {
-		return err instanceof DOMException && err.name === 'AbortError';
-	}
-
-	async #waitForRetry(attempt: number) {
-		const delayMs = RETRY_DELAY_MS * (2 ** attempt);
-		await new Promise(resolve => setTimeout(resolve, delayMs));
+		return postForm({
+			endpoint: CATBOX_API_ENDPOINT,
+			data,
+			timeoutMs: this.#requestTimeoutMs,
+			onRequest: request => this.emit('request', request),
+			onResponse: response => this.emit('response', response)
+		});
 	}
 
 	#getUserHashOrThrow() {
