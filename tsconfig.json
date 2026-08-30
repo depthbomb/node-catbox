@@ -26,6 +26,7 @@
 		"outDir": "dist",
 		"preserveConstEnums": false,
 		"removeComments": false,
+		"rootDir": "src",
 		"sourceMap": true,
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
