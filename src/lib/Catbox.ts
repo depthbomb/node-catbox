@@ -3,6 +3,7 @@ import EventEmitter from 'node:events';
 import { resolve, basename } from 'node:path';
 import {
 	CATBOX_API_ENDPOINT,
+	MAX_RESPONSE_BYTES,
 	CATBOX_REQUEST_TIMEOUT_MS,
 	CATBOX_MAX_FILE_BYTES
 } from '../constants';
@@ -13,7 +14,7 @@ import {
 	streamToBlobWithSizeLimit,
 	assertFileSizeWithinLimit
 } from '../utils';
-import { postForm, validateRequestTimeout } from '../request';
+import { postForm, validateRequestTimeout, validateResponseSizeLimit } from '../request';
 import type { RequestSnapshot, ResponseSnapshot } from '../utils';
 import type { ClientOptions, OperationOptions } from '../request';
 
@@ -122,17 +123,20 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 	#userHash?: string;
 	readonly #requestTimeoutMs: number;
 	readonly #retryTransientErrors: boolean;
+	readonly #maxResponseBytes: number;
 
 	/**
 	 * Creates a new {@link Catbox} instance
 	 * @param userHash Optional user hash
 	 * @param options Client request options
 	 */
-	public constructor(userHash?: string, { requestTimeoutMs = CATBOX_REQUEST_TIMEOUT_MS, retryTransientErrors = false }: ClientOptions = {}) {
+	public constructor(userHash?: string, { requestTimeoutMs = CATBOX_REQUEST_TIMEOUT_MS, retryTransientErrors = false, maxResponseBytes = MAX_RESPONSE_BYTES }: ClientOptions = {}) {
 		super();
 		validateRequestTimeout(requestTimeoutMs);
+		validateResponseSizeLimit(maxResponseBytes);
 		this.#requestTimeoutMs     = requestTimeoutMs;
 		this.#retryTransientErrors = retryTransientErrors === true;
+		this.#maxResponseBytes     = maxResponseBytes;
 		if (userHash) {
 			this.setUserHash(userHash);
 		}
@@ -409,6 +413,7 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 			data,
 			timeoutMs: this.#requestTimeoutMs,
 			retryTransientErrors: this.#retryTransientErrors,
+			maxResponseBytes: this.#maxResponseBytes,
 			signal,
 			onRequest: request => this.emit('request', request),
 			onResponse: response => this.emit('response', response)

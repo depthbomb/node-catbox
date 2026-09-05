@@ -3,6 +3,7 @@ import EventEmitter from 'node:events';
 import { resolve, basename } from 'node:path';
 import {
 	LITTERBOX_API_ENDPOINT,
+	MAX_RESPONSE_BYTES,
 	LITTERBOX_REQUEST_TIMEOUT_MS,
 	LITTERBOX_MAX_FILE_BYTES
 } from '../constants';
@@ -12,7 +13,7 @@ import {
 	streamToBlobWithSizeLimit,
 	assertFileSizeWithinLimit
 } from '../utils';
-import { postForm, validateRequestTimeout } from '../request';
+import { postForm, validateRequestTimeout, validateResponseSizeLimit } from '../request';
 import type { RequestSnapshot, ResponseSnapshot } from '../utils';
 import type { ClientOptions, OperationOptions } from '../request';
 
@@ -79,12 +80,15 @@ const acceptedFileNameLengths = [FileNameLength.Six, FileNameLength.Sixteen] as 
 export class Litterbox extends EventEmitter<LitterboxEvents> {
 	readonly #requestTimeoutMs: number;
 	readonly #retryTransientErrors: boolean;
+	readonly #maxResponseBytes: number;
 
-	public constructor({ requestTimeoutMs = LITTERBOX_REQUEST_TIMEOUT_MS, retryTransientErrors = false }: ClientOptions = {}) {
+	public constructor({ requestTimeoutMs = LITTERBOX_REQUEST_TIMEOUT_MS, retryTransientErrors = false, maxResponseBytes = MAX_RESPONSE_BYTES }: ClientOptions = {}) {
 		super();
 		validateRequestTimeout(requestTimeoutMs);
+		validateResponseSizeLimit(maxResponseBytes);
 		this.#requestTimeoutMs     = requestTimeoutMs;
 		this.#retryTransientErrors = retryTransientErrors === true;
+		this.#maxResponseBytes     = maxResponseBytes;
 	}
 
 	/**
@@ -165,6 +169,7 @@ export class Litterbox extends EventEmitter<LitterboxEvents> {
 			data,
 			timeoutMs: this.#requestTimeoutMs,
 			retryTransientErrors: this.#retryTransientErrors,
+			maxResponseBytes: this.#maxResponseBytes,
 			signal,
 			onRequest: request => this.emit('request', request),
 			onResponse: response => this.emit('response', response)

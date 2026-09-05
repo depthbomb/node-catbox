@@ -7,3 +7,4 @@ export const CATBOX_REQUEST_TIMEOUT_MS = 5 * 60_000;
 export const LITTERBOX_REQUEST_TIMEOUT_MS = 30 * 60_000;
 export const MAX_REQUEST_RETRIES      = 2;
 export const RETRY_DELAY_MS           = 500;
+export const MAX_RESPONSE_BYTES       = 64 * 1024;

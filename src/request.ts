@@ -1,6 +1,7 @@
 import { addAbortListener } from 'node:events';
 import {
 	MAX_REQUEST_RETRIES,
+	MAX_RESPONSE_BYTES,
 	RETRY_DELAY_MS,
 	USER_AGENT
 } from './constants';
@@ -21,6 +22,8 @@ export type ClientOptions = {
 	 * an operation that already completed remotely. Defaults to false.
 	 */
 	retryTransientErrors?: boolean;
+	/* Maximum decoded HTTP response bytes to read, defaults to 64 KiB. */
+	maxResponseBytes?: number;
 };
 
 export type OperationOptions = {
@@ -33,9 +36,43 @@ type PostFormOptions = OperationOptions & {
 	data: FormData;
 	timeoutMs: number;
 	retryTransientErrors?: boolean;
+	maxResponseBytes?: number;
 	onRequest: (request: RequestSnapshot) => void;
 	onResponse: (response: ResponseSnapshot) => void;
 };
+
+async function readResponseText(response: Response, maxBytes: number): Promise<string> {
+	const reader = response.body?.getReader();
+	if (!reader) {
+		return '';
+	}
+
+	const decoder = new TextDecoder();
+	let bytes = 0;
+	let text  = '';
+	try {
+		while (true) {
+			const chunk = await reader.read();
+			if (chunk.done) {
+				return text + decoder.decode();
+			}
+
+			bytes += chunk.value.byteLength;
+			if (bytes > maxBytes) {
+				throw new Error(`Response exceeds maximum size of ${maxBytes} bytes`);
+			}
+
+			text += decoder.decode(chunk.value, {
+				stream: true
+			});
+		}
+	} catch (error) {
+		await reader.cancel().catch(() => undefined);
+		throw error;
+	} finally {
+		reader.releaseLock();
+	}
+}
 
 function retryDelay(response: Response, attempt: number, timeoutMs: number): number {
 	const fallback = RETRY_DELAY_MS * (2 ** attempt);
@@ -95,16 +132,24 @@ export function validateRequestTimeout(timeoutMs: number): void {
 	}
 }
 
+export function validateResponseSizeLimit(maxBytes: number): void {
+	if (!Number.isSafeInteger(maxBytes) || maxBytes <= 0) {
+		throw new Error(`Invalid maximum response size "${maxBytes}", expected a positive safe integer`);
+	}
+}
+
 export async function postForm({
 	endpoint,
 	data,
 	timeoutMs,
 	retryTransientErrors = false,
+	maxResponseBytes = MAX_RESPONSE_BYTES,
 	signal,
 	onRequest,
 	onResponse
 }: PostFormOptions): Promise<string> {
 	validateRequestTimeout(timeoutMs);
+	validateResponseSizeLimit(maxResponseBytes);
 	signal?.throwIfAborted();
 
 	for (let attempt = 0; attempt <= MAX_REQUEST_RETRIES; attempt++) {
@@ -150,7 +195,7 @@ export async function postForm({
 			} else {
 				let body: string;
 				try {
-					body = await response.text();
+					body = await readResponseText(response, maxResponseBytes);
 				} catch (error) {
 					signal?.throwIfAborted();
 					throw normalizeRequestError(error, controller.signal, timeoutMs);
