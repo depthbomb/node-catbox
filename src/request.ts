@@ -15,12 +15,18 @@ export type ClientOptions = {
 	 * response-body transfer.
 	 */
 	requestTimeoutMs?: number;
+	/*
+	 * Opt into up to two retries of transient HTTP errors. A retry can duplicate
+	 * an operation that already completed remotely. Defaults to false.
+	 */
+	retryTransientErrors?: boolean;
 };
 
 type PostFormOptions = {
 	endpoint: string;
 	data: FormData;
 	timeoutMs: number;
+	retryTransientErrors?: boolean;
 	onRequest: (request: RequestSnapshot) => void;
 	onResponse: (response: ResponseSnapshot) => void;
 };
@@ -37,6 +43,7 @@ export async function postForm({
 	endpoint,
 	data,
 	timeoutMs,
+	retryTransientErrors = false,
 	onRequest,
 	onResponse
 }: PostFormOptions): Promise<string> {
@@ -73,7 +80,7 @@ export async function postForm({
 				throw error;
 			}
 
-			if (shouldRetryStatus(response.status) && attempt < MAX_REQUEST_RETRIES) {
+			if (retryTransientErrors === true && shouldRetryStatus(response.status) && attempt < MAX_REQUEST_RETRIES) {
 				// Body disposal is best-effort. A custom stream's cancellation failure
 				// must not suppress the retry selected from the HTTP status.
 				await response.body?.cancel().catch(() => undefined);

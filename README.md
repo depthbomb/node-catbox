@@ -28,7 +28,7 @@ This library aims to be a sort of successor to [https://www.npmjs.com/package/ca
 - Litterbox uploads by file path and stream with configurable lifetime
 - Catbox album management (create, edit, add/remove files, delete)
 - Native `EventEmitter` events
-- Built-in timeout and retry handling for transient request failures
+- Built-in timeouts and optional retries for transient HTTP errors
 
 # Requirements
 
@@ -53,7 +53,7 @@ const catbox = new Catbox(undefined, { requestTimeoutMs: 10 * 60_000 });
 const litterbox = new Litterbox({ requestTimeoutMs: 60 * 60_000 });
 ```
 
-Transient HTTP responses are retried twice. Ambiguous transport failures are not automatically retried because Catbox operations are not idempotent and may already have completed remotely.
+Requests are not retried by default: even an HTTP gateway error can occur after an upload or album mutation has completed remotely. If your application accepts the possibility of duplicate operations, explicitly enable up to two retries with `retryTransientErrors: true` in either client's constructor options. Transport failures are never automatically retried.
 
 ### Uploading to Catbox
 

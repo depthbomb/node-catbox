@@ -80,6 +80,9 @@ test('throws on invalid file name length', async () => {
 });
 
 test('retries transient server errors', async () => {
+	const retryClient = new Litterbox({
+		retryTransientErrors: true
+	});
 	const originalFetch = global.fetch;
 	const mockFetch = vi.fn()
 		.mockResolvedValueOnce(new Response('temporary', { status: 503 }))
@@ -92,7 +95,7 @@ test('retries transient server errors', async () => {
 			yield new Uint8Array([1, 2, 3]);
 		})();
 
-		await expect(lb.uploadFileStream({ stream, filename: 'test.bin' })).resolves.toContain('https://litter.catbox.moe/');
+		await expect(retryClient.uploadFileStream({ stream, filename: 'test.bin' })).resolves.toContain('https://litter.catbox.moe/');
 		expect(mockFetch).toHaveBeenCalledTimes(2);
 	} finally {
 		vi.stubGlobal('fetch', originalFetch);

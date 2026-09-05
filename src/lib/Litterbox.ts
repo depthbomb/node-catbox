@@ -78,11 +78,13 @@ const acceptedFileNameLengths = [FileNameLength.Six, FileNameLength.Sixteen] as 
 
 export class Litterbox extends EventEmitter<LitterboxEvents> {
 	readonly #requestTimeoutMs: number;
+	readonly #retryTransientErrors: boolean;
 
-	public constructor({ requestTimeoutMs = LITTERBOX_REQUEST_TIMEOUT_MS }: ClientOptions = {}) {
+	public constructor({ requestTimeoutMs = LITTERBOX_REQUEST_TIMEOUT_MS, retryTransientErrors = false }: ClientOptions = {}) {
 		super();
 		validateRequestTimeout(requestTimeoutMs);
-		this.#requestTimeoutMs = requestTimeoutMs;
+		this.#requestTimeoutMs     = requestTimeoutMs;
+		this.#retryTransientErrors = retryTransientErrors === true;
 	}
 
 	/**
@@ -158,6 +160,7 @@ export class Litterbox extends EventEmitter<LitterboxEvents> {
 			endpoint: LITTERBOX_API_ENDPOINT,
 			data,
 			timeoutMs: this.#requestTimeoutMs,
+			retryTransientErrors: this.#retryTransientErrors,
 			onRequest: request => this.emit('request', request),
 			onResponse: response => this.emit('response', response)
 		});

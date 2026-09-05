@@ -121,16 +121,18 @@ type DeleteAlbumOptions = {
 export class Catbox extends EventEmitter<CatboxEvents> {
 	#userHash?: string;
 	readonly #requestTimeoutMs: number;
+	readonly #retryTransientErrors: boolean;
 
 	/**
 	 * Creates a new {@link Catbox} instance
 	 * @param userHash Optional user hash
 	 * @param options Client request options
 	 */
-	public constructor(userHash?: string, { requestTimeoutMs = CATBOX_REQUEST_TIMEOUT_MS }: ClientOptions = {}) {
+	public constructor(userHash?: string, { requestTimeoutMs = CATBOX_REQUEST_TIMEOUT_MS, retryTransientErrors = false }: ClientOptions = {}) {
 		super();
 		validateRequestTimeout(requestTimeoutMs);
-		this.#requestTimeoutMs = requestTimeoutMs;
+		this.#requestTimeoutMs     = requestTimeoutMs;
+		this.#retryTransientErrors = retryTransientErrors === true;
 		if (userHash) {
 			this.setUserHash(userHash);
 		}
@@ -388,6 +390,7 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 			endpoint: CATBOX_API_ENDPOINT,
 			data,
 			timeoutMs: this.#requestTimeoutMs,
+			retryTransientErrors: this.#retryTransientErrors,
 			onRequest: request => this.emit('request', request),
 			onResponse: response => this.emit('response', response)
 		});

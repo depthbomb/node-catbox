@@ -9,6 +9,9 @@ config({ path: './.env' });
 const runIntegrationTests = process.env.RUN_INTEGRATION_TESTS === '1';
 const cb = new Catbox();
 const cb2 = new Catbox(process.env.USER_HASH!);
+const retryClient = new Catbox(undefined, {
+	retryTransientErrors: true
+});
 const testFileUrl = 'https://files.catbox.moe/6u9s4o.png';
 const invalidFileUrl = 'www.website';
 const invalidFileProtocolUrl = 'ftp://files.catbox.moe/6u9s4o.png';
@@ -85,7 +88,7 @@ test('retries transient server errors', async () => {
 	vi.stubGlobal('fetch', mockFetch as typeof fetch);
 
 	try {
-		const upload = cb.uploadURL({ url: testFileUrl });
+		const upload = retryClient.uploadURL({ url: testFileUrl });
 		await new Promise(resolve => setImmediate(resolve));
 		expect(mockFetch).toHaveBeenCalledTimes(1);
 		finishCancellation();
@@ -110,7 +113,7 @@ test('retries even when disposing the previous response body fails', async () =>
 	vi.stubGlobal('fetch', mockFetch as typeof fetch);
 
 	try {
-		await expect(cb.uploadURL({ url: testFileUrl })).resolves.toContain('https://files.catbox.moe/');
+		await expect(retryClient.uploadURL({ url: testFileUrl })).resolves.toContain('https://files.catbox.moe/');
 		expect(mockFetch).toHaveBeenCalledTimes(2);
 	} finally {
 		vi.stubGlobal('fetch', originalFetch);
@@ -127,7 +130,7 @@ test('rejects the final retryable HTTP response even when its body looks success
 	vi.stubGlobal('fetch', mockFetch as typeof fetch);
 
 	try {
-		const assertion = expect(cb.uploadURL({ url: testFileUrl })).rejects.toThrow(/HTTP 503/);
+		const assertion = expect(retryClient.uploadURL({ url: testFileUrl })).rejects.toThrow(/HTTP 503/);
 		await vi.runAllTimersAsync();
 		await assertion;
 		expect(mockFetch).toHaveBeenCalledTimes(3);
@@ -145,7 +148,7 @@ test('does not retry ambiguous transport failures', async () => {
 	vi.stubGlobal('fetch', mockFetch as typeof fetch);
 
 	try {
-		await expect(cb.createAlbum({ title: 'title', description: 'description' })).rejects.toBe(networkError);
+		await expect(retryClient.createAlbum({ title: 'title', description: 'description' })).rejects.toBe(networkError);
 		expect(mockFetch).toHaveBeenCalledTimes(1);
 	} finally {
 		vi.stubGlobal('fetch', originalFetch);
@@ -163,7 +166,9 @@ test('does not retry a completed request when a response listener throws', async
 			}
 		}), { status: 200 })
 	);
-	const client = new Catbox();
+	const client = new Catbox(undefined, {
+		retryTransientErrors: true
+	});
 	client.once('response', () => {
 		throw listenerError;
 	});
