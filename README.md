@@ -53,7 +53,7 @@ const catbox = new Catbox(undefined, { requestTimeoutMs: 10 * 60_000 });
 const litterbox = new Litterbox({ requestTimeoutMs: 60 * 60_000 });
 ```
 
-Requests are not retried by default: even an HTTP gateway error can occur after an upload or album mutation has completed remotely. If your application accepts the possibility of duplicate operations, explicitly enable up to two retries with `retryTransientErrors: true` in either client's constructor options. Transport failures are never automatically retried.
+Requests are not retried by default: even an HTTP gateway error can occur after an upload or album mutation has completed remotely. If your application accepts the possibility of duplicate operations, explicitly enable up to two retries with `retryTransientErrors: true` in either client's constructor options. Transport failures are never automatically retried. Enabled retries honor `Retry-After` seconds or HTTP dates, with exponential backoff as a minimum. If the server requests a wait longer than `requestTimeoutMs`, the call fails instead of retrying early.
 
 ### Uploading to Catbox
 

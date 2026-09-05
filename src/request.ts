@@ -31,6 +31,27 @@ type PostFormOptions = {
 	onResponse: (response: ResponseSnapshot) => void;
 };
 
+function retryDelay(response: Response, attempt: number, timeoutMs: number): number {
+	const fallback = RETRY_DELAY_MS * (2 ** attempt);
+	const value    = response.headers.get('retry-after')?.trim();
+	if (!value) {
+		return fallback;
+	}
+
+	const seconds = /^\d+$/.test(value);
+	const date    = /^[A-Za-z]+[ ,]/.test(value) ? Date.parse(value) : NaN;
+	const delayMs = seconds ? Number(value) * 1000 : date - Date.now();
+	if (Number.isNaN(delayMs)) {
+		return fallback;
+	}
+
+	if (delayMs > timeoutMs) {
+		throw new Error(`Retry-After exceeds the maximum retry wait of ${timeoutMs} ms`);
+	}
+
+	return Math.max(fallback, delayMs);
+}
+
 export function validateRequestTimeout(timeoutMs: number): void {
 	if (!Number.isInteger(timeoutMs) || timeoutMs <= 0 || timeoutMs > 2_147_483_647) {
 		throw new Error(
@@ -50,6 +71,7 @@ export async function postForm({
 	validateRequestTimeout(timeoutMs);
 
 	for (let attempt = 0; attempt <= MAX_REQUEST_RETRIES; attempt++) {
+		let delayMs = 0;
 		const controller = new AbortController();
 		const timeout = setTimeout(() => controller.abort(), timeoutMs);
 		try {
@@ -84,6 +106,7 @@ export async function postForm({
 				// Body disposal is best-effort. A custom stream's cancellation failure
 				// must not suppress the retry selected from the HTTP status.
 				await response.body?.cancel().catch(() => undefined);
+				delayMs = retryDelay(response, attempt, timeoutMs);
 			} else {
 				let body: string;
 				try {
@@ -103,7 +126,7 @@ export async function postForm({
 			clearTimeout(timeout);
 		}
 
-		await waitForRetry(attempt);
+		await waitForRetry(delayMs);
 	}
 
 	throw new Error('Request failed after retries');
@@ -121,7 +144,6 @@ function normalizeRequestError(error: unknown, signal: AbortSignal, timeoutMs: n
 	return error;
 }
 
-async function waitForRetry(attempt: number): Promise<void> {
-	const delayMs = RETRY_DELAY_MS * (2 ** attempt);
+async function waitForRetry(delayMs: number): Promise<void> {
 	await new Promise(resolve => setTimeout(resolve, delayMs));
 }
