@@ -15,7 +15,7 @@ import {
 } from '../utils';
 import { postForm, validateRequestTimeout } from '../request';
 import type { RequestSnapshot, ResponseSnapshot } from '../utils';
-import type { ClientOptions } from '../request';
+import type { ClientOptions, OperationOptions } from '../request';
 
 type CatboxEvents = {
 	uploadingURL:    [url: string];
@@ -33,14 +33,14 @@ type CatboxEvents = {
 	response: [response: ResponseSnapshot];
 };
 
-type UploadURLOptions = {
+type UploadURLOptions = OperationOptions & {
 	/**
 	 * Direct URL of the file to upload
 	 */
 	url: string;
 };
 
-type UploadFileOptions = {
+type UploadFileOptions = OperationOptions & {
 	/**
 	 * Path to the file to upload
 	 */
@@ -51,7 +51,7 @@ type UploadFileOptions = {
 	maxFileBytes?: number;
 };
 
-type UploadFileStreamOptions = {
+type UploadFileStreamOptions = OperationOptions & {
 	stream: ReadableStream<unknown> | AsyncIterable<unknown>;
 	filename: string;
 	/**
@@ -60,14 +60,14 @@ type UploadFileStreamOptions = {
 	maxStreamBytes?: number;
 };
 
-type DeleteFilesOptions = {
+type DeleteFilesOptions = OperationOptions & {
 	/**
 	 * Array of existing file names (including extension) to delete
 	 */
 	files: string[];
 };
 
-type CreateAlbumOptions = {
+type CreateAlbumOptions = OperationOptions & {
 	/**
 	 * Title of the album
 	 */
@@ -89,7 +89,7 @@ type EditAlbumOptions = CreateAlbumOptions & {
 	id: string;
 };
 
-type AddFilesToAlbumOptions = {
+type AddFilesToAlbumOptions = OperationOptions & {
 	/**
 	 * ID of the album
 	 */
@@ -100,7 +100,7 @@ type AddFilesToAlbumOptions = {
 	files: string[];
 };
 
-type RemoveFilesFromAlbumOptions = {
+type RemoveFilesFromAlbumOptions = OperationOptions & {
 	/**
 	 * ID of the album
 	 */
@@ -111,7 +111,7 @@ type RemoveFilesFromAlbumOptions = {
 	files: string[];
 };
 
-type DeleteAlbumOptions = {
+type DeleteAlbumOptions = OperationOptions & {
 	/**
 	 * ID of the album
 	 */
@@ -161,7 +161,9 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 	 * @param options Options
 	 * @returns The uploaded file URL
 	 */
-	public async uploadURL({ url }: UploadURLOptions) {
+	public async uploadURL({ url, signal }: UploadURLOptions) {
+		signal?.throwIfAborted();
+
 		assertValidHttpUrl(url);
 
 		const data = new FormData();
@@ -174,7 +176,7 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 
 		this.emit('uploadingURL', url);
 
-		const res = await this.#doRequest(data);
+		const res = await this.#doRequest(data, signal);
 		if (res.startsWith('https://files.catbox.moe/')) {
 			return res;
 		} else {
@@ -189,7 +191,9 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 	 * @param options Options
 	 * @returns The uploaded file URL
 	 */
-	public async uploadFile({ path, maxFileBytes = CATBOX_MAX_FILE_BYTES }: UploadFileOptions) {
+	public async uploadFile({ path, maxFileBytes = CATBOX_MAX_FILE_BYTES, signal }: UploadFileOptions) {
+		signal?.throwIfAborted();
+
 		path = resolve(path);
 
 		if (!await isValidFile(path)) {
@@ -208,7 +212,7 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 
 		this.emit('uploadingFile', path);
 
-		const res = await this.#doRequest(data);
+		const res = await this.#doRequest(data, signal);
 		if (res.startsWith('https://files.catbox.moe/')) {
 			return res;
 		} else {
@@ -216,8 +220,10 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 		}
 	}
 
-	public async uploadFileStream({ stream, filename, maxStreamBytes = CATBOX_MAX_FILE_BYTES }: UploadFileStreamOptions) {
-		const { blob: file, cleanup } = await streamToBlobWithSizeLimit(stream, maxStreamBytes);
+	public async uploadFileStream({ stream, filename, maxStreamBytes = CATBOX_MAX_FILE_BYTES, signal }: UploadFileStreamOptions) {
+		signal?.throwIfAborted();
+
+		const { blob: file, cleanup } = await streamToBlobWithSizeLimit(stream, maxStreamBytes, signal);
 		return runWithCleanup(async () => {
 			const data = new FormData();
 			data.set('reqtype', 'fileupload');
@@ -229,7 +235,7 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 
 			this.emit('uploadingStream', filename);
 
-			const res = await this.#doRequest(data);
+			const res = await this.#doRequest(data, signal);
 			if (res.startsWith('https://files.catbox.moe/')) {
 				return res;
 			} else {
@@ -243,7 +249,9 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 	 * @param options Options
 	 * @returns `true` if files have been deleted successfully
 	 */
-	public async deleteFiles({ files }: DeleteFilesOptions) {
+	public async deleteFiles({ files, signal }: DeleteFilesOptions) {
+		signal?.throwIfAborted();
+
 		const data = new FormData();
 		data.set('reqtype', 'deletefiles');
 		data.set('userhash', this.#getUserHashOrThrow());
@@ -251,7 +259,7 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 
 		this.emit('deletingFiles', files);
 
-		const res = await this.#doRequest(data);
+		const res = await this.#doRequest(data, signal);
 		if (res.includes('successfully')) {
 			return true;
 		} else {
@@ -264,7 +272,9 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 	 * @param options Options
 	 * @returns The album URL
 	 */
-	public async createAlbum({ title, description, files }: CreateAlbumOptions) {
+	public async createAlbum({ title, description, files, signal }: CreateAlbumOptions) {
+		signal?.throwIfAborted();
+
 		const data = new FormData();
 		data.set('reqtype', 'createalbum');
 		data.set('title', title);
@@ -280,7 +290,7 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 
 		this.emit('creatingAlbum', title, description, files);
 
-		const res = await this.#doRequest(data);
+		const res = await this.#doRequest(data, signal);
 		if (res.startsWith('https://catbox.moe/c/')) {
 			return res;
 		} else {
@@ -297,7 +307,9 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 	 * @param options Options
 	 * @returns The album URL
 	 */
-	public async editAlbum({ id, title, description, files }: EditAlbumOptions) {
+	public async editAlbum({ id, title, description, files, signal }: EditAlbumOptions) {
+		signal?.throwIfAborted();
+
 		const data = new FormData();
 		data.set('reqtype', 'editalbum');
 		data.set('short', id);
@@ -312,7 +324,7 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 
 		this.emit('editingAlbum', id, title, description, files);
 
-		const res = await this.#doRequest(data);
+		const res = await this.#doRequest(data, signal);
 		if (res === `https://catbox.moe/c/${id}`) {
 			return res;
 		} else {
@@ -325,7 +337,9 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 	 * @param options Options
 	 * @returns The album URL
 	 */
-	public async addFilesToAlbum({ id, files }: AddFilesToAlbumOptions) {
+	public async addFilesToAlbum({ id, files, signal }: AddFilesToAlbumOptions) {
+		signal?.throwIfAborted();
+
 		const data = new FormData();
 		data.set('reqtype', 'addtoalbum');
 		data.set('short', id);
@@ -334,7 +348,7 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 
 		this.emit('addingFilesToAlbum', id, files);
 
-		const res = await this.#doRequest(data);
+		const res = await this.#doRequest(data, signal);
 		if (res === `https://catbox.moe/c/${id}`) {
 			return res;
 		} else {
@@ -347,7 +361,9 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 	 * @param options Options
 	 * @returns The album URL
 	 */
-	public async removeFilesFromAlbum({ id, files }: RemoveFilesFromAlbumOptions) {
+	public async removeFilesFromAlbum({ id, files, signal }: RemoveFilesFromAlbumOptions) {
+		signal?.throwIfAborted();
+
 		const data = new FormData();
 		data.set('reqtype', 'removefromalbum');
 		data.set('short', id);
@@ -356,7 +372,7 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 
 		this.emit('removingFilesFromAlbum', id, files);
 
-		const res = await this.#doRequest(data);
+		const res = await this.#doRequest(data, signal);
 		if (res === `https://catbox.moe/c/${id}`) {
 			return res;
 		} else {
@@ -369,7 +385,9 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 	 * @param options Options
 	 * @returns `true` if the album was deleted or if the album doesn't exist
 	 */
-	public async removeAlbum({ id }: DeleteAlbumOptions) {
+	public async removeAlbum({ id, signal }: DeleteAlbumOptions) {
+		signal?.throwIfAborted();
+
 		const data = new FormData();
 		data.set('reqtype', 'deletealbum');
 		data.set('short', id);
@@ -377,7 +395,7 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 
 		this.emit('removingAlbum', id);
 
-		const res = await this.#doRequest(data);
+		const res = await this.#doRequest(data, signal);
 		if (res.length === 0) {
 			return true;
 		} else {
@@ -385,12 +403,13 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 		}
 	}
 
-	async #doRequest(data: FormData) {
+	async #doRequest(data: FormData, signal?: AbortSignal) {
 		return postForm({
 			endpoint: CATBOX_API_ENDPOINT,
 			data,
 			timeoutMs: this.#requestTimeoutMs,
 			retryTransientErrors: this.#retryTransientErrors,
+			signal,
 			onRequest: request => this.emit('request', request),
 			onResponse: response => this.emit('response', response)
 		});

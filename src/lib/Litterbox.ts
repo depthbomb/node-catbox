@@ -14,7 +14,7 @@ import {
 } from '../utils';
 import { postForm, validateRequestTimeout } from '../request';
 import type { RequestSnapshot, ResponseSnapshot } from '../utils';
-import type { ClientOptions } from '../request';
+import type { ClientOptions, OperationOptions } from '../request';
 
 type LitterboxEvents = {
 	uploadingFile:   [filepath: string, duration: typeof acceptedDurations[number] | FileLifetime];
@@ -24,7 +24,7 @@ type LitterboxEvents = {
 	response: [response: ResponseSnapshot];
 };
 
-type UploadFileOptions = {
+type UploadFileOptions = OperationOptions & {
 	/**
 	 * Path to the file to upload.
 	 */
@@ -43,7 +43,7 @@ type UploadFileOptions = {
 	maxFileBytes?: number;
 };
 
-type UploadFileStreamOptions = {
+type UploadFileStreamOptions = OperationOptions & {
 	stream: ReadableStream<unknown> | AsyncIterable<unknown>;
 	filename: string;
 	/**
@@ -92,7 +92,9 @@ export class Litterbox extends EventEmitter<LitterboxEvents> {
 	 * @param options Options
 	 * @returns The uploaded file URL
 	 */
-	public async uploadFile({ path, duration = FileLifetime.OneHour, fileNameLength = FileNameLength.Six, maxFileBytes = LITTERBOX_MAX_FILE_BYTES }: UploadFileOptions) {
+	public async uploadFile({ path, duration = FileLifetime.OneHour, fileNameLength = FileNameLength.Six, maxFileBytes = LITTERBOX_MAX_FILE_BYTES, signal }: UploadFileOptions) {
+		signal?.throwIfAborted();
+
 		path = resolve(path);
 
 		if (!await isValidFile(path)) {
@@ -112,7 +114,7 @@ export class Litterbox extends EventEmitter<LitterboxEvents> {
 
 		this.emit('uploadingFile', path, duration);
 
-		const res = await this.#doRequest(data);
+		const res = await this.#doRequest(data, signal);
 		if (res.startsWith('https://litter.catbox.moe/')) {
 			return res;
 		} else {
@@ -120,11 +122,13 @@ export class Litterbox extends EventEmitter<LitterboxEvents> {
 		}
 	}
 
-	public async uploadFileStream({ stream, filename, duration = FileLifetime.OneHour, fileNameLength = FileNameLength.Six, maxStreamBytes = LITTERBOX_MAX_FILE_BYTES }: UploadFileStreamOptions) {
+	public async uploadFileStream({ stream, filename, duration = FileLifetime.OneHour, fileNameLength = FileNameLength.Six, maxStreamBytes = LITTERBOX_MAX_FILE_BYTES, signal }: UploadFileStreamOptions) {
+		signal?.throwIfAborted();
+
 		this.#assertValidDuration(duration);
 		this.#assertValidFileNameLength(fileNameLength);
 
-		const { blob: file, cleanup } = await streamToBlobWithSizeLimit(stream, maxStreamBytes);
+		const { blob: file, cleanup } = await streamToBlobWithSizeLimit(stream, maxStreamBytes, signal);
 		return runWithCleanup(async () => {
 			const data = new FormData();
 			data.set('reqtype', 'fileupload');
@@ -134,7 +138,7 @@ export class Litterbox extends EventEmitter<LitterboxEvents> {
 
 			this.emit('uploadingStream', filename, duration);
 
-			const res = await this.#doRequest(data);
+			const res = await this.#doRequest(data, signal);
 			if (res.startsWith('https://litter.catbox.moe/')) {
 				return res;
 			} else {
@@ -155,12 +159,13 @@ export class Litterbox extends EventEmitter<LitterboxEvents> {
 		}
 	}
 
-	async #doRequest(data: FormData) {
+	async #doRequest(data: FormData, signal?: AbortSignal) {
 		return postForm({
 			endpoint: LITTERBOX_API_ENDPOINT,
 			data,
 			timeoutMs: this.#requestTimeoutMs,
 			retryTransientErrors: this.#retryTransientErrors,
+			signal,
 			onRequest: request => this.emit('request', request),
 			onResponse: response => this.emit('response', response)
 		});

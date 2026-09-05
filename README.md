@@ -55,6 +55,20 @@ const litterbox = new Litterbox({ requestTimeoutMs: 60 * 60_000 });
 
 Requests are not retried by default: even an HTTP gateway error can occur after an upload or album mutation has completed remotely. If your application accepts the possibility of duplicate operations, explicitly enable up to two retries with `retryTransientErrors: true` in either client's constructor options. Transport failures are never automatically retried. Enabled retries honor `Retry-After` seconds or HTTP dates, with exponential backoff as a minimum. If the server requests a wait longer than `requestTimeoutMs`, the call fails instead of retrying early.
 
+### Cancelling an operation
+
+Every upload and album/file management method accepts an optional `signal`. It cancels stream staging, HTTP transfer, and retry waits. Use `AbortSignal.timeout(...)` for an overall deadline in addition to the per-attempt HTTP timeout:
+
+```ts
+await catbox.uploadFileStream({
+    stream,
+    filename: 'file.ext',
+    signal: AbortSignal.timeout(60_000)
+});
+```
+
+Cancellation removes staged temporary files. An arbitrary source iterator may continue its own work if it ignores cancellation; the client stops awaiting it. Cancellation cannot undo a mutation already applied by the server.
+
 ### Uploading to Catbox
 
 ```ts

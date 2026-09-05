@@ -1,6 +1,7 @@
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { Readable } from 'node:stream';
+import { addAbortListener } from 'node:events';
 import { stat } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { rm, mkdtemp } from 'node:fs/promises';
@@ -27,6 +28,55 @@ export type RequestSnapshot = Readonly<{
 type StreamChunk = string | ArrayBuffer | ArrayBufferView;
 
 const textEncoder = new TextEncoder();
+
+async function nextWithSignal(iterator: AsyncIterator<unknown>, signal: AbortSignal): Promise<IteratorResult<unknown>> {
+	signal.throwIfAborted();
+	let rejectAbort!: (reason: unknown) => void;
+	const aborted = new Promise<never>((_resolve, reject) => {
+		rejectAbort = reject;
+	});
+	const listener = addAbortListener(signal, () => rejectAbort(signal.reason));
+	try {
+		return await Promise.race([iterator.next(), aborted]);
+	} finally {
+		listener[Symbol.dispose]();
+	}
+}
+
+async function* abortableChunks(stream: ReadableStream | AsyncIterable<unknown>, signal: AbortSignal): AsyncGenerator<unknown> {
+	const source = stream instanceof ReadableStream ? Readable.fromWeb(stream, {
+		objectMode: true
+	}) : stream;
+	const iterator = source[Symbol.asyncIterator]();
+	let complete = false;
+	try {
+		while (true) {
+			const chunk = await nextWithSignal(iterator, signal);
+			if (chunk.done) {
+				complete = true;
+
+				return;
+			}
+
+			yield chunk.value;
+		}
+	} finally {
+		if (!complete) {
+			if (signal.aborted && source instanceof Readable) {
+				source.destroy();
+			}
+
+			const closing = iterator.return?.();
+			if (signal.aborted) {
+				// A caller's iterator may never settle its pending next() or return().
+				// Observe late failures without holding temporary-file cleanup open.
+				void Promise.resolve(closing).catch(() => undefined);
+			} else {
+				await closing;
+			}
+		}
+	}
+}
 
 export async function isValidFile(path: string): Promise<boolean> {
 	try {
@@ -105,11 +155,14 @@ function toUint8Array(chunk: StreamChunk): Uint8Array {
 
 export async function streamToBlobWithSizeLimit(
 	stream: ReadableStream | AsyncIterable<unknown>,
-	maxBytes: number
+	maxBytes: number,
+	signal?: AbortSignal
 ): Promise<{ blob: Blob; cleanup: () => Promise<void> }> {
 	if (!Number.isInteger(maxBytes) || maxBytes <= 0) {
 		throw new Error(`Invalid max stream size "${maxBytes}", expected a positive integer`);
 	}
+
+	signal?.throwIfAborted();
 
 	const tempDirPath = await mkdtemp(join(tmpdir(), 'node-catbox-'));
 	const tempFilePath = join(tempDirPath, `${randomUUID()}.upload`);
@@ -127,7 +180,7 @@ export async function streamToBlobWithSizeLimit(
 	let totalBytes = 0;
 	try {
 		await pipeline(
-			Readable.from(stream as AsyncIterable<unknown>),
+			Readable.from(signal ? abortableChunks(stream, signal) : stream as AsyncIterable<unknown>),
 			async function* (chunks) {
 				for await (const rawChunk of chunks) {
 					if (
@@ -148,7 +201,10 @@ export async function streamToBlobWithSizeLimit(
 					yield chunk;
 				}
 			},
-			streamWriter
+			streamWriter,
+			{
+				signal
+			}
 		);
 
 		const blob = await openAsBlob(tempFilePath);
@@ -163,6 +219,7 @@ export async function streamToBlobWithSizeLimit(
 				{ cause: cleanupError }
 			);
 		}
+		signal?.throwIfAborted();
 		throw error;
 	}
 }

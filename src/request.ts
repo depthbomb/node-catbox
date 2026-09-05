@@ -1,3 +1,4 @@
+import { addAbortListener } from 'node:events';
 import {
 	MAX_REQUEST_RETRIES,
 	RETRY_DELAY_MS,
@@ -22,7 +23,12 @@ export type ClientOptions = {
 	retryTransientErrors?: boolean;
 };
 
-type PostFormOptions = {
+export type OperationOptions = {
+	/* Cancels input staging, HTTP transfer, and retry waits for this operation. */
+	signal?: AbortSignal;
+};
+
+type PostFormOptions = OperationOptions & {
 	endpoint: string;
 	data: FormData;
 	timeoutMs: number;
@@ -52,6 +58,35 @@ function retryDelay(response: Response, attempt: number, timeoutMs: number): num
 	return Math.max(fallback, delayMs);
 }
 
+function shouldRetryStatus(status: number): boolean {
+	return status === 408 || status === 425 || status === 429 || status >= 500;
+}
+
+function normalizeRequestError(error: unknown, signal: AbortSignal, timeoutMs: number): unknown {
+	if (signal.aborted && error instanceof Error && error.name === 'AbortError') {
+		return new Error(`Request timed out after ${timeoutMs} ms`, { cause: error });
+	}
+
+	return error;
+}
+
+async function waitForRetry(delayMs: number, signal?: AbortSignal): Promise<void> {
+	signal?.throwIfAborted();
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	let listener: Disposable | undefined;
+	try {
+		await new Promise<void>((resolve, reject) => {
+			timer = setTimeout(resolve, delayMs);
+			if (signal) {
+				listener = addAbortListener(signal, () => reject(signal.reason));
+			}
+		});
+	} finally {
+		clearTimeout(timer);
+		listener?.[Symbol.dispose]();
+	}
+}
+
 export function validateRequestTimeout(timeoutMs: number): void {
 	if (!Number.isInteger(timeoutMs) || timeoutMs <= 0 || timeoutMs > 2_147_483_647) {
 		throw new Error(
@@ -65,14 +100,17 @@ export async function postForm({
 	data,
 	timeoutMs,
 	retryTransientErrors = false,
+	signal,
 	onRequest,
 	onResponse
 }: PostFormOptions): Promise<string> {
 	validateRequestTimeout(timeoutMs);
+	signal?.throwIfAborted();
 
 	for (let attempt = 0; attempt <= MAX_REQUEST_RETRIES; attempt++) {
 		let delayMs = 0;
 		const controller = new AbortController();
+		const attemptSignal = signal ? AbortSignal.any([signal, controller.signal]) : controller.signal;
 		const timeout = setTimeout(() => controller.abort(), timeoutMs);
 		try {
 			const init: RequestInit = {
@@ -81,17 +119,19 @@ export async function postForm({
 					'user-agent': USER_AGENT
 				},
 				body: data,
-				signal: controller.signal
+				signal: attemptSignal
 			};
 
 			// Listener failures are deliberately outside transport error handling: a
 			// completed non-idempotent POST must never be repeated because an observer threw.
 			onRequest(createRequestSnapshot(endpoint, init));
+			attemptSignal.throwIfAborted();
 
 			let response: Response;
 			try {
 				response = await fetch(endpoint, init);
 			} catch (error) {
+				signal?.throwIfAborted();
 				throw normalizeRequestError(error, controller.signal, timeoutMs);
 			}
 
@@ -112,6 +152,7 @@ export async function postForm({
 				try {
 					body = await response.text();
 				} catch (error) {
+					signal?.throwIfAborted();
 					throw normalizeRequestError(error, controller.signal, timeoutMs);
 				}
 
@@ -126,24 +167,8 @@ export async function postForm({
 			clearTimeout(timeout);
 		}
 
-		await waitForRetry(delayMs);
+		await waitForRetry(delayMs, signal);
 	}
 
 	throw new Error('Request failed after retries');
-}
-
-function shouldRetryStatus(status: number): boolean {
-	return status === 408 || status === 425 || status === 429 || status >= 500;
-}
-
-function normalizeRequestError(error: unknown, signal: AbortSignal, timeoutMs: number): unknown {
-	if (signal.aborted && error instanceof Error && error.name === 'AbortError') {
-		return new Error(`Request timed out after ${timeoutMs} ms`, { cause: error });
-	}
-
-	return error;
-}
-
-async function waitForRetry(delayMs: number): Promise<void> {
-	await new Promise(resolve => setTimeout(resolve, delayMs));
 }
