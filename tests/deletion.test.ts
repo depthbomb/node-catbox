@@ -1,5 +1,5 @@
-import { afterEach, expect, test, vi } from 'vitest';
 import { Catbox } from '../dist/index.mjs';
+import { vi, test, expect, afterEach } from 'vitest';
 
 afterEach(() => {
 	vi.unstubAllGlobals();

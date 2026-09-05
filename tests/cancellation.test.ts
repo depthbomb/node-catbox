@@ -1,5 +1,5 @@
-import { afterEach, expect, test, vi } from 'vitest';
 import { stat } from 'node:fs/promises';
+import { vi, test, expect, afterEach } from 'vitest';
 import { Catbox, Litterbox } from '../dist/index.mjs';
 
 const stagedPaths = vi.hoisted(() => [] as string[]);

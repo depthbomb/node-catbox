@@ -1,5 +1,5 @@
 import { basename } from 'node:path';
-import { test, expect, vi } from 'vitest';
+import { vi, test, expect } from 'vitest';
 import { createReadStream } from 'node:fs';
 import { Litterbox, FileLifetime, FileNameLength } from '../dist/index.mjs';
 

@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { afterEach, expect, test, vi } from 'vitest';
+import { vi, test, expect, afterEach } from 'vitest';
 import { Catbox, Litterbox } from '../dist/index.mjs';
 
 type OperationCase = {

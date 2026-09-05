@@ -1,5 +1,5 @@
-import { describe, expect, test, vi } from 'vitest';
 import { runWithCleanup } from '../src/utils';
+import { vi, test, expect, describe } from 'vitest';
 
 describe('runWithCleanup', () => {
 	test('preserves a successful remote result when local cleanup fails', async () => {

@@ -2,7 +2,7 @@ import { config } from 'dotenv';
 import { basename } from 'node:path';
 import { Catbox } from '../dist/index.mjs';
 import { createReadStream } from 'node:fs';
-import { test, assert, expect, vi } from 'vitest';
+import { vi, test, assert, expect } from 'vitest';
 
 config({ path: './.env' });
 

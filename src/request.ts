@@ -1,14 +1,6 @@
 import { addAbortListener } from 'node:events';
-import {
-	MAX_REQUEST_RETRIES,
-	MAX_RESPONSE_BYTES,
-	RETRY_DELAY_MS,
-	USER_AGENT
-} from './constants';
-import {
-	createRequestSnapshot,
-	createResponseSnapshot
-} from './utils';
+import { createRequestSnapshot, createResponseSnapshot } from './utils';
+import { USER_AGENT, RETRY_DELAY_MS, MAX_RESPONSE_BYTES, MAX_REQUEST_RETRIES } from './constants';
 import type { RequestSnapshot, ResponseSnapshot } from './utils';
 
 export type ClientOptions = {

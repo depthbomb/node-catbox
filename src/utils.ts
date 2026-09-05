@@ -1,11 +1,10 @@
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { Readable } from 'node:stream';
-import { addAbortListener } from 'node:events';
-import { stat } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
-import { rm, mkdtemp } from 'node:fs/promises';
+import { addAbortListener } from 'node:events';
 import { pipeline } from 'node:stream/promises';
+import { rm, stat, mkdtemp } from 'node:fs/promises';
 import { openAsBlob, createWriteStream } from 'node:fs';
 
 export type ResponseSnapshot = Readonly<{
