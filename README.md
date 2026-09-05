@@ -109,6 +109,12 @@ await catbox.uploadFileStream({
 });
 ```
 
+### Choosing a file path or stream
+
+Prefer `uploadFile({ path })` when the file already exists on disk. It uploads directly from a file-backed Blob. `uploadFileStream` first stages the entire input in a temporary file so it can validate the size before sending and replay the body when retries are enabled. Staging adds a full disk write and read, requires temporary disk space, and delays the HTTP request until the source ends.
+
+Use the stream method for sources without a file path, and provide a `signal` to bound the time spent waiting for input. Staging keeps memory use independent of the total upload size.
+
 ### User Hash
 
 Some operations require your account's user hash which can be set on instantiation with
