@@ -264,7 +264,7 @@ export class Catbox extends EventEmitter<CatboxEvents> {
 		this.emit('deletingFiles', files);
 
 		const res = await this.#doRequest(data, signal);
-		if (res.includes('successfully')) {
+		if (res.trim() === 'Files successfully deleted.') {
 			return true;
 		} else {
 			throw new Error(res);
